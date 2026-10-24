@@ -1,0 +1,1387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Evangeline</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=Figtree:wght@400;600;700&family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,500;1,500&family=Jost:wght@400;500&family=Abril+Fatface&family=VT323&family=IM+Fell+English:ital@0;1&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Hanken+Grotesk:wght@400;600&family=Young+Serif&family=Nunito:wght@400;700&family=Big+Shoulders+Display:wght@700;900&family=Courier+Prime:wght@400;700&family=DM+Serif+Display&display=swap">
+<style>
+/* Layout: a closed book opens into one world per page. Top ribbon = chapters, fx canvas behind, caption bar for voice.
+   Palette/type per world are set on #world[data-w]. Vines with terminal nodes tie every world together. */
+:root{
+  --bg:#f3fff9; --ink:#0a2a33; --acc:#e0116f; --acct:#c10f62; --acc2:#2f6bff; --rad:999px;
+  --fd:'Syne',system-ui,sans-serif; --fb:'Figtree',system-ui,sans-serif; --fs:'VT323','Courier New',monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:#eafff5;color:var(--ink);font-family:var(--fb);font-size:17px;line-height:1.6;overflow:hidden;
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--acct);outline-offset:3px}
+h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
+p{margin:0 0 .9em}
+
+/* ===================== COVER ===================== */
+#cover{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;overflow:hidden;
+  background:linear-gradient(135deg,#d9fff0,#e3efff 48%,#ffe3f0);color:#0a2a33;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  transition:opacity 1s ease,transform 1s ease}
+#cover.leave{opacity:0;transform:scale(1.12);pointer-events:none}
+.cvblob{position:absolute;border-radius:50%;opacity:.7;animation:drift 14s ease-in-out infinite alternate}
+.cb1{width:46vmax;height:46vmax;left:-14vmax;top:-14vmax;background:radial-gradient(circle,#c6f55a 0,transparent 66%)}
+.cb2{width:42vmax;height:42vmax;right:-12vmax;bottom:-12vmax;background:radial-gradient(circle,#ff9cc7 0,transparent 66%);animation-delay:-5s}
+.cb3{width:34vmax;height:34vmax;right:8vmax;top:-10vmax;background:radial-gradient(circle,#9dbcff 0,transparent 66%);animation-delay:-9s}
+@keyframes drift{to{transform:translate(6vmax,5vmax) scale(1.18)}}
+.bookwrap{position:relative;width:min(290px,66vw);aspect-ratio:3/4;perspective:1500px;z-index:2;margin-top:6px}
+.book{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(3deg) rotateY(-7deg);transition:transform 2.6s cubic-bezier(.5,.05,.2,1);animation:bob 5s ease-in-out infinite}
+@keyframes bob{50%{translate:0 -8px}}
+.book.opened{transform:translateX(34%) scale(.62)}
+.bpages{position:absolute;inset:0;border-radius:6px 16px 16px 6px;background:linear-gradient(120deg,#fff,#effff7 60%,#e8f1ff);box-shadow:0 34px 60px rgba(10,42,51,.28);overflow:hidden;transition:box-shadow 1s}
+.bpages::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(184,242,60,.55),transparent 65%);opacity:0;transition:opacity 1.2s}
+.glow .bpages::after,.opened .bpages::after{opacity:1}
+.bcover{position:absolute;inset:0;transform-origin:left center;transform-style:preserve-3d;transition:transform 2.6s cubic-bezier(.5,.05,.2,1)}
+.opened .bcover{transform:rotateY(-168deg)}
+.bfront,.bback{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:6px 16px 16px 6px;overflow:hidden}
+.bfront{background:linear-gradient(145deg,#0f5560,#08343d 60%,#0b4a42);border:2px solid #1d8576;box-shadow:inset 14px 0 18px rgba(0,0,0,.35),0 0 0 rgba(184,242,60,0);transition:box-shadow 1s}
+.glow .bfront{box-shadow:inset 14px 0 18px rgba(0,0,0,.35),0 0 90px 24px rgba(184,242,60,.75)}
+.bback{transform:rotateY(180deg);background:linear-gradient(-120deg,#ffffff,#e9fff3);border-radius:16px 6px 6px 16px}
+.cvine{position:absolute;inset:0;color:#b8f23c;opacity:.8}
+.cvine svg{width:100%;height:100%}
+.seal{position:absolute;left:50%;top:50%;width:94px;height:94px;margin:-47px 0 0 -47px;border-radius:50%;border:0;padding:0;--p:0;
+  background:radial-gradient(circle at 35% 30%,#efffb0,#b8f23c 55%,#6fb30a);color:#06282f;font-family:'Syne',system-ui,sans-serif;font-weight:800;font-size:2.5rem;line-height:1;
+  display:grid;place-items:center;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  filter:brightness(calc(.62 + .5*var(--p)));box-shadow:0 0 calc(6px + 64px*var(--p)) rgba(184,242,60,calc(.2 + .8*var(--p)))}
+.seal .ring{position:absolute;inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);transform:rotate(-90deg);pointer-events:none}
+.ring circle{fill:none;stroke-width:3}
+.ring .track{stroke:rgba(184,242,60,.28)}
+.ring .prog{stroke:#efffb0;stroke-dasharray:289;stroke-dashoffset:289;stroke-linecap:round}
+.cvui{position:relative;z-index:2;text-align:center;max-width:430px;display:grid;gap:12px;justify-items:center}
+#hint{font-family:'Syne',sans-serif;font-weight:800;letter-spacing:.16em;font-size:.95rem;text-transform:uppercase;margin:0;color:#0a2a33}
+.cvui p.sm{margin:0;font-size:.95rem;color:#16424d}
+.chips2{display:flex;gap:10px}
+.chip2{border:2px solid #0a2a33;background:transparent;border-radius:999px;padding:6px 16px;font-weight:600;font-size:.9rem;min-height:44px}
+.chip2[aria-pressed="true"]{background:#0a2a33;color:#c6f55a}
+#skip{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:3;background:none;border:0;color:#16424d;text-decoration:underline;font-size:.95rem;padding:10px}
+#openAlt{background:none;border:0;color:#16424d;text-decoration:underline;font-size:.85rem;padding:6px;min-height:36px}
+
+/* ===================== WORLD SHELL ===================== */
+#world{position:fixed;inset:0;background:var(--bg);color:var(--ink);transition:background .7s}
+#fx{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#stage{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;z-index:2}
+.pg{position:relative;min-height:100%;max-width:1040px;margin:0 auto;padding:96px max(16px,4vw) 180px;animation:pgin .7s ease both;font-family:var(--fb)}
+@keyframes pgin{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.deco{position:fixed;inset:0;pointer-events:none;z-index:0}
+.in{position:relative;z-index:3}
+.kicker{font-family:var(--fb);font-weight:600;font-size:.82rem;letter-spacing:.2em;text-transform:uppercase;color:var(--acct);margin:0 0 6px}
+.muted{opacity:.72}
+ul.tick{list-style:none;padding:0;margin:0 0 1em;display:grid;gap:6px}
+ul.tick li{padding-left:1.4em;position:relative}
+ul.tick li::before{content:"";position:absolute;left:0;top:.62em;width:.7em;height:.7em;border:2px solid var(--acct);border-radius:2px;transform:rotate(45deg) scale(.8)}
+.btn{background:transparent;border:2px solid var(--acct);color:var(--ink);border-radius:var(--rad);padding:8px 20px;font-family:var(--fb);font-weight:600;letter-spacing:.04em;min-height:44px;transition:transform .2s,background .2s,color .2s}
+.btn:hover{background:var(--acct);color:var(--bg);transform:translateY(-2px)}
+.nextrow{margin-top:44px;display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+.subtabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px}
+.subtabs button{background:transparent;border:1.5px solid color-mix(in srgb,var(--acct) 60%,transparent);border-radius:var(--rad);padding:5px 15px;font-size:.84rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;min-height:40px;color:var(--ink)}
+.subtabs button[aria-current="true"]{background:var(--acct);color:var(--bg);border-color:var(--acct)}
+.vine{position:fixed;width:min(34vw,290px);color:var(--acct);opacity:.5;pointer-events:none;z-index:1}
+.vine svg{display:block;width:100%;height:auto;overflow:visible}
+.vine.l{left:0;bottom:0}
+.vine.r{right:0;top:62px;transform:scaleX(-1)}
+.vp{stroke-dasharray:900;stroke-dashoffset:900;animation:grow 4.5s ease forwards}
+@keyframes grow{to{stroke-dashoffset:0}}
+.vd{animation:blink 2.4s ease-in-out infinite}
+.vd:nth-of-type(2){animation-delay:.5s}.vd:nth-of-type(3){animation-delay:1s}.vd:nth-of-type(4){animation-delay:1.6s}
+@keyframes blink{50%{opacity:.2}}
+.slot{border:2px dashed color-mix(in srgb,var(--acct) 55%,transparent);background:color-mix(in srgb,var(--ink) 4%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:14px;min-height:130px;width:100%}
+.slot.wide{aspect-ratio:16/9}
+.slot .ph-tag{font-family:var(--fs);font-size:1.25rem;letter-spacing:.14em;color:var(--acct)}
+.slot .ph-lab{font-size:.88rem;opacity:.75;max-width:32ch}
+.slot img,.slot video{max-width:100%;max-height:100%;display:block}
+.slot.loaded{border-style:solid;padding:0;background:#000}
+.slot audio{width:100%}
+.redact{position:relative;border:1px solid color-mix(in srgb,var(--acct) 40%,transparent);background:rgba(0,0,0,.55);padding:14px;display:grid;gap:7px;min-height:118px}
+.redact i{display:block;height:10px;background:#000;box-shadow:0 0 0 1px color-mix(in srgb,var(--acct) 25%,transparent)}
+.redact span{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:10px}
+.redact span b{font-family:var(--fb);font-weight:700;font-size:.78rem;letter-spacing:.18em;color:var(--acct);border:2px solid var(--acct);padding:3px 10px;transform:rotate(-4deg);background:rgba(0,0,0,.85)}
+.redact small{display:block;font-size:.78rem;opacity:.7;margin-top:6px;letter-spacing:0;color:#ddd}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:18px}
+
+/* ribbon */
+#ribbon{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:6px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 10px max(12px,env(safe-area-inset-left,0px));pointer-events:none}
+#ribbon>*{pointer-events:auto}
+.rbwrap{display:flex;gap:4px;align-items:center;overflow-x:auto;scrollbar-width:none;padding:4px;border-radius:999px;
+  background:color-mix(in srgb,var(--bg) 94%,transparent);border:1px solid color-mix(in srgb,var(--acct) 45%,transparent);max-width:calc(100% - 100px)}
+.rb{flex:none;display:flex;gap:7px;align-items:baseline;background:none;border:0;border-radius:999px;padding:5px 12px;font-family:var(--fb);font-weight:600;font-size:.84rem;letter-spacing:.04em;color:var(--ink);min-height:36px;opacity:.75}
+.rb b{font-weight:700;color:var(--acct)}
+.rb[aria-current="true"]{background:var(--acct);color:var(--bg);opacity:1}
+.rb[aria-current="true"] b{color:inherit}
+.rbtn{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid color-mix(in srgb,var(--acct) 45%,transparent);background:color-mix(in srgb,var(--bg) 80%,transparent);font-weight:700;color:var(--ink)}
+#muteBtn{margin-left:auto;font-size:.76rem;letter-spacing:.08em;font-weight:700;width:auto;padding:0 12px;border-radius:999px}
+#muteBtn[aria-pressed="true"]{background:var(--acct);color:var(--bg)}
+
+/* caption bar */
+#cap{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(760px,calc(100% - 32px));z-index:80;display:flex;gap:14px;align-items:center;
+  background:rgba(14,18,30,.92);color:#fff;border:1.5px solid var(--cc,#b8f23c);border-radius:18px;padding:12px 16px;opacity:0;pointer-events:none;transition:opacity .4s}
+#cap.show{opacity:1}
+#cap .face{flex:none;width:54px;height:54px;border-radius:50%;border:2px solid var(--cc,#b8f23c);display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;color:var(--cc,#b8f23c);overflow:hidden;background:#000}
+#cap .face img{width:100%;height:100%;object-fit:cover;object-position:50% 38%}
+#cap[data-who="n"] .face{border-style:dashed}
+#who{font-family:'Figtree',sans-serif;font-weight:700;font-size:.74rem;letter-spacing:.22em;color:var(--cc,#b8f23c)}
+#line{margin:0;font-size:1.12rem;line-height:1.4;min-height:1.4em;font-family:'Figtree',sans-serif}
+#turn{position:fixed;inset:0;z-index:70;pointer-events:none;opacity:0;visibility:hidden}
+/* ===================== WORLD THEMES ===================== */
+#world[data-w="front"]{--bg:#f3fff9;--ink:#0a2a33;--acc:#e0116f;--acct:#c10f62;--acc2:#2f6bff;--fd:'Syne',system-ui,sans-serif;--fb:'Figtree',system-ui,sans-serif;--rad:999px;--cc:#e0116f}
+#world[data-w="hoia"]{--bg:#080304;--ink:#f1dcd5;--acc:#b3261e;--acct:#e0584a;--fd:'Cinzel',Georgia,serif;--fb:'EB Garamond',Georgia,serif;--rad:0;--cc:#e0584a;color-scheme:dark}
+#world[data-w="gilded"]{--bg:#120c04;--ink:#f6e7c1;--acc:#e2b13c;--acct:#e8bb4a;--fd:'Bodoni Moda',Georgia,serif;--fb:'Jost',system-ui,sans-serif;--rad:0;--cc:#e8bb4a;color-scheme:dark}
+#world[data-w="card"]{--bg:#0b6a58;--ink:#ffffff;--acc:#ffd23f;--acct:#ffd23f;--fd:'Abril Fatface',Georgia,serif;--fb:'Figtree',system-ui,sans-serif;--rad:12px;--cc:#ffd23f;color-scheme:dark}
+#world[data-w="broadcast"]{--bg:#070b12;--ink:#dbe6f7;--acc:#9ec5ff;--acct:#9ec5ff;--fd:'VT323','Courier New',monospace;--fb:'IM Fell English',Georgia,serif;--rad:4px;--cc:#9ec5ff;color-scheme:dark}
+#world[data-w="c1"]{--bg:#fff1f6;--ink:#3a1030;--acc:#ff5fa2;--acct:#b0155f;--fd:'Gloock',Georgia,serif;--fb:'Hanken Grotesk',system-ui,sans-serif;--rad:999px;--cc:#ff5fa2}
+#world[data-w="c2"]{--bg:#050409;--ink:#d8d3ea;--acc:#6d4fd6;--acct:#a393f2;--fd:'Gloock',Georgia,serif;--fb:'Hanken Grotesk',system-ui,sans-serif;--rad:6px;--cc:#8b74f0;color-scheme:dark}
+#world[data-w="liminal"]{--bg:#0b0b0b;--ink:#ececec;--acc:#bdbdbd;--acct:#d6d6d6;--fd:'Bodoni Moda',Georgia,serif;--fb:'Hanken Grotesk',system-ui,sans-serif;--rad:0px;--cc:#cfcfcf;color-scheme:dark}
+#world[data-w="rocky"]{--bg:#fff3e3;--ink:#4a2a12;--acc:#e8913a;--acct:#a85a12;--fd:'Young Serif',Georgia,serif;--fb:'Nunito',system-ui,sans-serif;--rad:999px;--cc:#e8913a}
+#world[data-w="workshop"]{--bg:#100c06;--ink:#f7ead2;--acc:#ffb347;--acct:#ffb347;--fd:'Big Shoulders Display',Impact,sans-serif;--fb:'Courier Prime','Courier New',monospace;--rad:0;--cc:#ffb347;color-scheme:dark}
+#world[data-w="close"]{--bg:#fdfcff;--ink:#1a1740;--acc:#e0116f;--acct:#c10f62;--fd:'DM Serif Display',Georgia,serif;--fb:'Figtree',system-ui,sans-serif;--rad:999px;--cc:#e0116f}
+.pg h1,.pg h2{font-family:var(--fd)}
+
+/* ---- FRONT ROOM ---- */
+#pg-front .deco i{position:absolute;border-radius:50%;opacity:.5;animation:drift 16s ease-in-out infinite alternate}
+#pg-front .deco i:nth-child(1){width:44vmax;height:44vmax;left:-10vmax;top:-12vmax;background:radial-gradient(circle,#c6f55a 0,transparent 66%)}
+#pg-front .deco i:nth-child(2){width:38vmax;height:38vmax;right:-10vmax;top:20vh;background:radial-gradient(circle,#ff9cc7 0,transparent 66%);animation-delay:-6s}
+#pg-front .deco i:nth-child(3){width:30vmax;height:30vmax;left:30vw;bottom:-14vmax;background:radial-gradient(circle,#9dbcff 0,transparent 66%);animation-delay:-11s}
+.fr-grid{display:grid;grid-template-columns:minmax(0,330px) minmax(0,1fr);gap:40px;align-items:center}
+.fr-art{position:relative;width:100%;max-width:330px;aspect-ratio:3/4}
+.fr-fig{width:100%;display:flex;flex-direction:column;align-items:center;margin-bottom:18px}
+.figcap{margin:18px 0 0;text-align:center;font-size:.95rem;font-style:italic;opacity:.8}
+.arch{position:absolute;inset:0;border-radius:999px 999px 28px 28px;overflow:hidden;background:#fff;border:6px solid #fff;box-shadow:0 24px 50px rgba(10,42,51,.22)}
+.arch img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;display:block}
+.ringg{position:absolute;inset:-14px;border-radius:999px 999px 36px 36px;background:conic-gradient(from 0deg,#e0116f,#ffc83d,#b8f23c,#2f6bff,#e0116f);animation:spin 9s linear infinite;z-index:-1;filter:blur(1px)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.dot{position:absolute;width:18px;height:18px;border-radius:50%;animation:orb 7s ease-in-out infinite}
+.dot.a{left:-22px;top:18%;background:#ffc83d}.dot.b{right:-18px;top:46%;background:#e0116f;animation-delay:-2s}.dot.c{left:12%;bottom:-18px;background:#2f6bff;animation-delay:-4s}
+@keyframes orb{50%{transform:translateY(-16px) scale(1.2)}}
+.fr-copy h1{display:inline-block;max-width:100%;font-size:clamp(2rem,9vw,4.6rem);padding-right:.06em;line-height:.95;font-weight:800;letter-spacing:-.01em;background:linear-gradient(100deg,#e0116f,#2f6bff 55%,#0a8f6a);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.1em}
+.aka{font-family:var(--fd);font-weight:600;font-size:1.2rem;margin:4px 0 14px}
+.lede{font-size:1.2rem;max-width:34em}
+.bento{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px;margin-top:20px}
+.tile{padding:16px 16px 14px;border-radius:20px;animation:floaty 6s ease-in-out infinite}
+.tile:nth-child(2){animation-delay:-1.2s}.tile:nth-child(3){animation-delay:-2.4s}.tile:nth-child(4){animation-delay:-3.6s}.tile:nth-child(5){animation-delay:-4.8s}
+@keyframes floaty{50%{transform:translateY(-6px)}}
+.tile h3{font-family:var(--fd);font-weight:800;font-size:1.15rem;margin-bottom:4px}
+.tile p{margin:0;font-size:.92rem;line-height:1.4}
+.t1{background:#b8f23c;color:#0a2a33}.t2{background:#e0116f;color:#fff}.t3{background:#2f6bff;color:#fff}.t4{background:#ffc83d;color:#0a2a33}.t5{background:#0a2a33;color:#e6fff3}
+
+/* ---- HOIA BACIU ---- */
+#pg-hoia .deco{background:radial-gradient(ellipse at 72% 18%,rgba(179,38,30,.3),transparent 60%),radial-gradient(ellipse at 15% 95%,rgba(94,15,15,.55),transparent 55%)}
+#pg-hoia .deco::before,#pg-hoia .deco::after{content:"";position:absolute;inset:-20%;background:radial-gradient(ellipse at 30% 60%,rgba(255,255,255,.07),transparent 50%),radial-gradient(ellipse at 70% 40%,rgba(255,255,255,.05),transparent 45%);animation:fog 22s ease-in-out infinite alternate}
+#pg-hoia .deco::after{animation-duration:31s;animation-direction:alternate-reverse;opacity:.7}
+@keyframes fog{to{transform:translateX(12%) translateY(-4%)}}
+.h-grid{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:40px;align-items:start}
+.h-cover img{width:100%;display:block;border:1px solid #5e0f0f;box-shadow:0 0 70px rgba(179,38,30,.5);animation:redpulse 5s ease-in-out infinite}
+@keyframes redpulse{50%{box-shadow:0 0 110px rgba(224,88,74,.6)}}
+#pg-hoia h1{font-size:clamp(2.2rem,6vw,4rem);font-weight:700;letter-spacing:.1em;text-transform:uppercase;line-height:1.05;text-shadow:0 0 30px rgba(179,38,30,.7)}
+#pg-hoia .role{font-family:var(--fd);letter-spacing:.2em;text-transform:uppercase;font-size:.85rem;color:var(--acct);margin:10px 0 16px}
+#pg-hoia .lead{font-size:1.3rem;font-style:italic}
+#pg-hoia p,#pg-hoia li{font-size:1.2rem}
+#pg-hoia ul.tick li::before{border-radius:0;border-color:#b3261e;background:#b3261e;transform:rotate(45deg) scale(.6)}
+
+/* ---- GILDED CAGE ---- */
+#pg-gilded .deco{background:radial-gradient(ellipse at 50% 0%,rgba(226,177,60,.25),transparent 60%),linear-gradient(180deg,#120c04,#1c1306)}
+.bars{position:absolute;top:0;bottom:0;width:min(14vw,120px);background:linear-gradient(180deg,#f6dc8a,#b98a22 50%,#f6dc8a);
+  -webkit-mask:repeating-linear-gradient(90deg,#000 0 4px,transparent 4px 24px);mask:repeating-linear-gradient(90deg,#000 0 4px,transparent 4px 24px);opacity:.55}
+.bars.l{left:0}.bars.r{right:0}
+.bars::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 40%,rgba(255,255,255,.9) 50%,transparent 60%);background-size:300% 100%;animation:shimmer 7s linear infinite}
+@keyframes shimmer{from{background-position:150% 0}to{background-position:-150% 0}}
+.rail{position:absolute;left:0;right:0;height:14px;background:linear-gradient(90deg,#8a6414,#f6dc8a,#8a6414);box-shadow:0 0 24px rgba(226,177,60,.4)}
+.rail.t{top:0}.rail.b{bottom:0}
+.g-frame{border:1px solid #e2b13c;outline:1px solid rgba(226,177,60,.4);outline-offset:8px;padding:30px clamp(18px,4vw,44px);background:rgba(18,12,4,.72);position:relative}
+.g-frame::before,.g-frame::after{content:"\2766";position:absolute;color:#e2b13c;font-size:1.6rem;background:#120c04;padding:0 10px;left:50%;transform:translateX(-50%)}
+.g-frame::before{top:-18px}.g-frame::after{bottom:-18px}
+#pg-gilded h1{font-style:italic;font-weight:500;font-size:clamp(2.6rem,8vw,5rem);line-height:1;background:linear-gradient(180deg,#fff2c0,#e2b13c 50%,#8a6414);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.08em}
+#pg-gilded .role{letter-spacing:.24em;text-transform:uppercase;font-size:.8rem;color:var(--acct);margin:10px 0 18px;font-weight:500}
+.stampc{display:inline-block;border:2px solid #e2b13c;color:#e2b13c;padding:2px 12px;letter-spacing:.2em;font-size:.75rem;transform:rotate(-3deg);margin-left:12px;vertical-align:middle}
+#pg-gilded p,#pg-gilded li{font-size:1.1rem;font-weight:400}
+
+/* ---- CARD GAME ---- */
+#pg-card .deco{background:radial-gradient(ellipse at 50% 30%,rgba(255,255,255,.14),transparent 60%),repeating-linear-gradient(45deg,rgba(255,255,255,.025) 0 2px,transparent 2px 6px)}
+#pg-card h1{font-size:clamp(2.6rem,9vw,5.2rem);line-height:1;color:#ffd23f;text-shadow:3px 3px 0 #08382f}
+#pg-card .lead{font-size:1.2rem;margin:10px 0 26px;max-width:36em}
+.deck{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:20px}
+.pc{position:relative;aspect-ratio:5/7;background:none;border:0;padding:0;perspective:1000px;animation:deal .8s cubic-bezier(.2,.8,.2,1) both;color:#14213d;text-align:left}
+.pc:nth-child(2){animation-delay:.12s}.pc:nth-child(3){animation-delay:.24s}.pc:nth-child(4){animation-delay:.36s}
+@keyframes deal{from{opacity:0;transform:translateY(-60px) rotate(-8deg)}to{opacity:1;transform:none}}
+.pc-in{position:absolute;inset:0;transition:transform .8s cubic-bezier(.3,.7,.2,1);transform-style:preserve-3d}
+.pc.flip .pc-in{transform:rotateY(180deg)}
+.pc:hover .pc-in{translate:0 -6px}
+.pc-b,.pc-f{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+.pc-b{background:repeating-linear-gradient(45deg,#14213d 0 8px,#1d2f57 8px 16px);border:8px solid #fff;display:grid;place-items:center}
+.pc-b i{width:46%;aspect-ratio:1;transform:rotate(45deg);border:3px solid #ffd23f;background:#14213d}
+.pc-f{transform:rotateY(180deg);background:#fff;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.pc-f .ix{font-family:var(--fd);font-size:1.7rem;line-height:1}
+.pc-f .ix.red{color:#d62839}
+.pc-f h3{font-family:var(--fd);font-size:1.15rem;line-height:1.1;margin:4px 0 6px;color:#14213d}
+.pc-f p{font-size:.8rem;line-height:1.35;margin:0;color:#233152}
+.pc-f .ix.bot{align-self:flex-end;transform:rotate(180deg)}
+
+/* ---- BROADCAST ---- */
+#pg-broadcast .deco{background:radial-gradient(ellipse at 50% 20%,rgba(158,197,255,.12),transparent 60%)}
+#pg-broadcast h1{font-size:clamp(2.4rem,7vw,4.2rem);letter-spacing:.06em;line-height:1}
+#pg-broadcast .kicker{font-family:var(--fs);font-size:1.3rem;font-weight:400}
+.crtwrap{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;margin-top:18px}
+.crt{position:relative;border:10px solid #172033;border-radius:26px;background:#02040a;box-shadow:inset 0 0 50px rgba(158,197,255,.25),0 0 40px rgba(158,197,255,.08);overflow:hidden;aspect-ratio:16/9;max-height:56vh;width:100%}
+.crt canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+.crt::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(180deg,rgba(0,0,0,.2) 0 1px,transparent 1px 3px);pointer-events:none}
+.osd{position:absolute;left:14px;top:10px;font-family:var(--fs);font-size:1.8rem;color:#9ec5ff;text-shadow:0 0 6px #9ec5ff;letter-spacing:.14em;z-index:2}
+.osd2{position:absolute;right:14px;bottom:10px;font-family:var(--fs);font-size:1.25rem;color:#9ec5ff;letter-spacing:.14em;opacity:.8;z-index:2}
+.knobs{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.knobs .tune{font-family:var(--fs);font-size:1.3rem;opacity:.7;letter-spacing:.1em}
+.knob{width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#2a3750,#0d1320);border:2px solid #3b4d70;font-family:var(--fs);font-size:1.7rem;color:#dbe6f7}
+.knob[aria-pressed="true"]{border-color:#9ec5ff;color:#9ec5ff;box-shadow:0 0 14px rgba(158,197,255,.5)}
+.chan{border:1px solid rgba(158,197,255,.4);padding:18px 20px;background:rgba(158,197,255,.05)}
+.chan h2{font-family:var(--fd);font-size:2.2rem;letter-spacing:.05em;margin-bottom:6px}
+.chan .stp{font-family:var(--fs);font-size:1.2rem;letter-spacing:.16em;color:#9ec5ff;text-transform:uppercase}
+.chan p{font-size:1.1rem}
+
+/* ---- DREAMSPACE concepts ---- */
+.cp .deco{background:radial-gradient(ellipse at 20% 10%,color-mix(in srgb,var(--acc) 28%,transparent),transparent 55%),radial-gradient(ellipse at 90% 90%,color-mix(in srgb,var(--acc2,#8a5cff) 22%,transparent),transparent 55%)}
+#world[data-w="c1"]{--acc2:#8a5cff}#world[data-w="c2"]{--acc2:#1b1240}#world[data-w="liminal"]{--acc2:#6a6a6a}
+.cp-grid{display:grid;grid-template-columns:minmax(0,310px) minmax(0,1fr);gap:40px;align-items:start}
+.cp-cover{aspect-ratio:2/3;border-radius:14px;overflow:hidden;box-shadow:0 30px 60px color-mix(in srgb,var(--acc) 35%,transparent);position:relative;
+  background:linear-gradient(150deg,var(--acc),var(--acc2));display:grid;place-items:center;color:#fff}
+.cp-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.cp-cover .num{font-family:var(--fd);font-size:6rem;line-height:1;text-shadow:0 6px 30px rgba(0,0,0,.25)}
+.cp-cover small{position:absolute;bottom:14px;left:0;right:0;text-align:center;letter-spacing:.16em;text-transform:uppercase;font-size:.72rem;font-weight:600}
+.cp h1{font-size:clamp(2.4rem,7vw,4.4rem);line-height:1.02;margin-bottom:8px}
+.cp .tag2{font-style:italic;font-size:1.2rem;margin-bottom:14px;opacity:.85}
+.cp .pill{display:inline-block;border:1.5px solid var(--acct);color:var(--acct);border-radius:999px;padding:2px 12px;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin:4px 6px 0 0}
+.cp .tbd{opacity:.65;font-style:italic}
+
+/* ---- ROCKY ---- */
+#pg-rocky .deco{background:radial-gradient(ellipse at 30% 20%,rgba(255,200,120,.5),transparent 55%),radial-gradient(ellipse at 85% 85%,rgba(255,170,120,.35),transparent 55%)}
+.r-grid{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:44px;align-items:center}
+.r-photo{position:relative;border-radius:999px 999px 30px 30px;overflow:hidden;background:#fff;border:8px solid #fff;box-shadow:0 0 0 2px #f0c898,0 30px 60px rgba(168,90,18,.28);aspect-ratio:4/5}
+.r-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 55%;display:block}
+.r-halo{position:absolute;inset:-26px;border-radius:999px 999px 44px 44px;background:radial-gradient(circle,rgba(255,196,110,.7),transparent 68%);z-index:-1;animation:halo 5s ease-in-out infinite}
+@keyframes halo{50%{opacity:.55;transform:scale(1.04)}}
+.r-photo-wrap{position:relative;max-width:340px;width:100%}
+#pg-rocky h1{font-size:clamp(2.6rem,8vw,4.8rem);line-height:1}
+#pg-rocky p{font-size:1.15rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+.chip{border:1.5px solid var(--acct);color:var(--acct);border-radius:999px;padding:1px 12px;font-size:.84rem;font-weight:700}
+.chip.learn{border-style:dashed;color:var(--ink);opacity:.8}
+
+/* ---- WORKSHOP ---- */
+#pg-workshop{background-image:linear-gradient(rgba(255,179,71,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,179,71,.07) 1px,transparent 1px);background-size:34px 34px;background-attachment:local}
+#pg-workshop h1{font-size:clamp(3rem,10vw,6rem);font-weight:900;text-transform:uppercase;line-height:.95;letter-spacing:.02em}
+#pg-workshop .kicker{font-family:var(--fd);font-weight:700;font-size:1.1rem}
+.bp{border:1px dashed #ffb347;padding:20px 22px;position:relative;background:rgba(16,12,6,.86)}
+.bp::before,.bp::after{content:"+";position:absolute;color:#ffb347;font-size:1.4rem;line-height:1}
+.bp::before{left:-7px;top:-10px}.bp::after{right:-7px;bottom:-10px}
+.bp .stp{font-family:var(--fd);font-size:1rem;letter-spacing:.2em;text-transform:uppercase;color:#ffb347;display:block;margin-bottom:6px;font-weight:700}
+.bp h2{font-size:2rem;font-weight:900;text-transform:uppercase;line-height:1;margin-bottom:10px}
+.bp p{font-size:.98rem}
+
+/* ---- CLOSE ---- */
+#pg-close .deco{background:radial-gradient(ellipse at 90% 0%,rgba(224,17,111,.1),transparent 55%),radial-gradient(ellipse at 0% 100%,rgba(47,107,255,.1),transparent 55%)}
+#pg-close h1{font-size:clamp(2.4rem,7vw,4.4rem);line-height:1}
+.toc{margin:26px 0 0;display:grid;max-width:640px}
+.toc button{display:flex;gap:10px;align-items:baseline;background:none;border:0;border-bottom:1px solid rgba(26,23,64,.1);padding:10px 2px;text-align:left;font-size:1.05rem;min-height:46px;color:var(--ink)}
+.toc button:hover{color:var(--acct)}
+.toc .lead2{flex:1;border-bottom:2px dotted rgba(26,23,64,.28);transform:translateY(-4px);min-width:16px}
+.toc b{font-family:var(--fd);font-weight:400;font-size:1.15rem}
+.colo{margin-top:64px;padding:38px clamp(18px,4vw,44px);border-top:2px solid var(--ink);position:relative}
+.colo .kicker{margin-bottom:18px}
+.colo .by{font-family:var(--fd);font-size:1.5rem;margin:0}
+.colo h2{font-size:clamp(2.6rem,9vw,5.6rem);line-height:1;margin:6px 0 16px;background:linear-gradient(100deg,#e0116f,#2f6bff);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.08em}
+.colo .small{max-width:34em;opacity:.8}
+.colo .portrait{width:150px;height:150px;border-radius:50%;overflow:hidden;margin-bottom:18px;border:4px solid #fff;box-shadow:0 0 0 2px var(--acct)}
+.colo .portrait img{width:100%;height:100%;object-fit:cover}
+
+
+.tbd{opacity:.65;font-style:italic}
+/* cover extras */
+.rays{position:absolute;left:50%;top:44%;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.6) 0 6deg,transparent 6deg 18deg);-webkit-mask:radial-gradient(circle,#000,transparent 55%);mask:radial-gradient(circle,#000,transparent 55%);opacity:0;transition:opacity 1.6s;animation:spin 70s linear infinite;pointer-events:none;z-index:1}
+.glow .rays{opacity:.75}
+.spark{position:absolute;bottom:-10px;width:6px;height:6px;border-radius:50%;background:#b8f23c;box-shadow:0 0 12px currentColor;animation:rise 4s linear forwards;z-index:30;pointer-events:none}
+@keyframes rise{to{transform:translate(var(--dx,0),-110vh);opacity:0}}
+.halo{position:absolute;left:50%;top:50%;width:94px;height:94px;margin:-47px 0 0 -47px;border-radius:50%;border:2px solid rgba(184,242,60,.6);animation:halo2 2.4s ease-out infinite;pointer-events:none}
+@keyframes halo2{from{transform:scale(.9);opacity:.9}to{transform:scale(2.1);opacity:0}}
+.cdeco{position:absolute;inset:0;width:100%;height:100%;color:#b8f23c}
+.runes{position:absolute;left:50%;top:50%;width:190px;height:190px;margin:-95px 0 0 -95px;animation:spin 40s linear infinite;pointer-events:none}
+.runes.rev{width:150px;height:150px;margin:-75px 0 0 -75px;animation-direction:reverse;animation-duration:26s}
+#holdUi{display:grid;gap:10px;justify-items:center}
+#sndUi{display:grid;visibility:hidden;gap:12px;justify-items:center;text-align:center;position:absolute;top:0;left:50%;width:min(92vw,420px);margin-left:calc(min(92vw,420px) / -2)}
+#sndUi.show{visibility:visible;animation:pgin .8s ease both}
+#cvui{min-height:190px;position:relative;align-content:start}
+#sndUi h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;margin:0}
+.bigchip{white-space:nowrap;border:2px solid #0a2a33;border-radius:999px;padding:10px 28px;font-weight:700;background:#fff;min-height:50px;font-size:1rem;color:#0a2a33}
+.bigchip.on{background:#0a2a33;color:#c6f55a}
+.bigchip:hover{transform:translateY(-2px)}
+/* hoia */
+#pg-hoia .flash{position:fixed;inset:0;pointer-events:none;z-index:4;background:radial-gradient(circle min(46vmax,460px) at var(--mx,50%) var(--my,35%),rgba(255,170,70,.2) 0,rgba(255,120,30,.09) 38%,rgba(0,0,0,.5) 100%);animation:lflick 3.1s steps(1) infinite}
+@keyframes lflick{0%{opacity:1}12%{opacity:.86}20%{opacity:1}47%{opacity:.9}55%{opacity:1}78%{opacity:.84}85%{opacity:1}}
+.eyes{position:fixed;pointer-events:none;z-index:1;display:flex;gap:14px;opacity:0;animation:eyeblink 9s infinite}
+.eyes::before,.eyes::after{content:"";width:9px;height:5px;border-radius:50%;background:#ff2a1a;box-shadow:0 0 12px 4px rgba(255,42,26,.7)}
+@keyframes eyeblink{0%,40%{opacity:0}46%,70%{opacity:.9}74%,100%{opacity:0}}
+/* gilded */
+#pg-gilded h1.gl{animation:glitch .5s steps(2) 3}
+@keyframes glitch{0%{transform:translate(0)}25%{transform:translate(-5px,2px);filter:hue-rotate(60deg)}50%{transform:translate(6px,-2px)}75%{transform:translate(-3px,-1px);filter:hue-rotate(-60deg)}100%{transform:none}}
+.twist{border-left:3px solid #e2b13c;padding:10px 18px;background:rgba(226,177,60,.08);margin:14px 0;animation:pgin .9s ease both}
+/* card box */
+.boxbtn{position:relative;aspect-ratio:5/7;background:none;border:0;padding:0;perspective:900px;color:#ffd23f;animation:deal .8s cubic-bezier(.2,.8,.2,1) .5s both}
+.bx-base{position:absolute;left:0;right:0;bottom:0;top:22%;z-index:2;border-radius:6px 6px 14px 14px;background:linear-gradient(160deg,#16294d,#0c1730);border:3px solid #ffd23f;display:grid;place-items:center;text-align:center;box-shadow:0 14px 30px rgba(0,0,0,.45);font-family:'Abril Fatface',serif;font-size:1.25rem;padding:14px;padding-top:26%;line-height:1.1}
+.bx-base small{display:block;font-family:'Figtree',sans-serif;font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:#fff;opacity:.85;margin-top:8px}
+.bx-lid{position:absolute;left:-3%;right:-3%;top:0;height:26%;z-index:3;border-radius:8px;background:linear-gradient(160deg,#1d3566,#102043);border:3px solid #ffd23f;transform-origin:top center;transition:transform .9s cubic-bezier(.3,.7,.2,1);display:grid;place-items:center;font-family:'Abril Fatface',serif;font-size:1.3rem}
+.boxbtn.open .bx-lid{transform:rotateX(-115deg)}
+.bx-cards{position:absolute;left:10%;right:10%;top:8%;height:40%;z-index:1;transition:transform .9s .3s}
+.bx-cards i{position:absolute;inset:0;background:#fff;border-radius:8px;border:2px solid #14213d}
+.bx-cards i:nth-child(2){transform:rotate(-6deg)}.bx-cards i:nth-child(3){transform:rotate(5deg)}
+.boxbtn.open .bx-cards{transform:translateY(-26%)}
+.boxbtn:not(.open):hover .bx-base{translate:0 -4px}
+.arcpanel{margin:30px auto 0;background:#fffaf0;color:#14213d;border:6px solid #fff;border-radius:18px;padding:28px clamp(18px,4vw,44px);box-shadow:0 20px 50px rgba(0,0,0,.4);max-width:760px;opacity:0;transform:translateY(24px) scale(.97);transition:opacity .8s,transform .8s}
+.arcpanel.show{opacity:1;transform:none}
+.arcpanel h2{font-family:'Abril Fatface',serif;font-size:2rem;color:#d62839;margin-bottom:10px}
+.arcpanel p{font-size:1.1rem;line-height:1.7;color:#233152}
+/* broadcast */
+.onair{position:absolute;right:12px;top:10px;z-index:2;font-family:var(--fs);font-size:1.3rem;letter-spacing:.14em;color:#ff5a5a;border:2px solid #ff5a5a;padding:0 10px;animation:blinkr 2s steps(2) infinite}
+@keyframes blinkr{50%{opacity:.35}}
+/* workshop */
+.bp.wide{margin-top:26px}
+.bp .tbd{font-size:.95rem}
+/* veil */
+.veil{display:grid;justify-items:center;gap:8px;background:none;border:0;padding:24px 10px;color:var(--ink);text-align:center;margin:0 auto}
+.veil .orb{position:relative;width:128px;height:128px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#ffd6ec 35%,#e0116f 80%);box-shadow:0 0 26px rgba(224,17,111,.4);animation:orbp 2.6s ease-in-out infinite;transition:transform .9s,opacity .9s;will-change:transform}
+@keyframes orbp{50%{transform:scale(1.07)}}
+.veil .orb::before{content:"";position:absolute;inset:-14px;border-radius:50%;border:2px dashed rgba(47,107,255,.6);animation:spin 12s linear infinite;will-change:transform}
+.veil .orb::after{content:"";position:absolute;inset:-28px;border-radius:50%;border:1px solid rgba(224,17,111,.35);animation:halo2 2.8s ease-out infinite}
+.veil .vt{font-family:var(--fd);font-size:1.7rem;margin-top:18px}
+.veil .vs{letter-spacing:.2em;text-transform:uppercase;font-size:.78rem;opacity:.75}
+.veil.gone .orb{opacity:0;animation:none}
+.veil.gone .vt,.veil.gone .vs{opacity:0;transition:opacity .5s}
+.reveal{display:grid;gap:14px;max-width:640px}
+.reveal>*{opacity:0;animation:rise2 .9s ease forwards;animation-delay:calc(var(--i,0)*.35s)}
+@keyframes rise2{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.reveal .btn{justify-self:start}
+.roles{display:flex;gap:8px;flex-wrap:wrap}
+.roles span{border:1.5px solid var(--acct);color:var(--acct);border-radius:999px;padding:2px 14px;font-weight:600;font-size:.85rem}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.facts div{background:#fff;border-radius:16px;padding:12px;box-shadow:0 6px 20px rgba(26,23,64,.08)}
+.facts b{display:block;font-family:var(--fd);font-weight:400;font-size:2rem;color:var(--acct);line-height:1}
+.facts span{font-size:.8rem}
+
+.crt.vid{aspect-ratio:9/16;max-height:72vh;width:min(100%,calc(72vh*9/16))}
+.crt video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:1}
+.crt.vid .osd,.crt.vid .osd2,.crt.vid .onair{display:none}
+.onair{opacity:.3;animation:none}
+.onair.on{opacity:1;animation:blinkr 2s steps(2) infinite}
+.arc-sub{letter-spacing:.2em;text-transform:uppercase;font-size:.78rem;color:#d62839!important;margin:0 0 14px}
+.arc-scroll{max-height:62vh;overflow:auto;padding-right:8px}
+.docs{display:grid;gap:14px;margin:6px 0 10px}
+.doc{border:1px solid rgba(226,177,60,.55);background:rgba(226,177,60,.05)}
+.doc summary{cursor:pointer;list-style:none;display:flex;gap:12px;align-items:baseline;padding:14px 18px;min-height:48px}
+.doc summary::-webkit-details-marker{display:none}
+.doc summary span{letter-spacing:.2em;text-transform:uppercase;font-size:.75rem;color:var(--acct)}
+.doc summary b{font-family:var(--fd);font-style:italic;font-weight:500;font-size:1.5rem}
+.doc summary::after{content:"+";margin-left:auto;font-size:1.6rem;color:var(--acct)}
+.doc[open] summary::after{content:"\2212"}
+.docbody{max-height:62vh;overflow:auto;padding:4px 20px 20px;border-top:1px solid rgba(226,177,60,.3)}
+.docbody h3{font-family:var(--fd);font-style:italic;font-weight:500;font-size:1.25rem;color:var(--acct);margin:1.2em 0 .3em}
+.docbody p{font-size:1.02rem;margin:0 0 .8em}
+.cp .doc{border-color:color-mix(in srgb,var(--acct) 50%,transparent);background:color-mix(in srgb,var(--acct) 6%,transparent)}
+.cp .docbody{border-color:color-mix(in srgb,var(--acct) 30%,transparent)}
+.cp .docbody h3{font-style:normal}
+@media (max-width:760px){
+  body{font-size:16px}
+  .fr-grid,.h-grid,.cp-grid,.r-grid{grid-template-columns:minmax(0,1fr);gap:26px}
+  .fr-art,.h-cover,.cp-cover,.r-photo-wrap{max-width:260px;margin:0 auto}
+  .pg{padding-bottom:200px}
+  .rb span{display:none}
+  .rb[aria-current="true"] span{display:inline}
+  .rbwrap{max-width:calc(100% - 96px)}
+  #cap{padding:10px 12px;gap:10px}#cap .face{width:44px;height:44px;font-size:1.2rem}#line{font-size:1.02rem}
+  .bars{width:7vw}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+ul.wsys b{font-family:var(--fd);letter-spacing:.02em}
+#pg-workshop .cols{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.slot.zoomable{cursor:zoom-in;position:relative}
+.slot.zoomable::after{content:"Tap to enlarge";position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.72);color:#fff;font:600 .72rem/1 var(--fb);letter-spacing:.08em;text-transform:uppercase;padding:6px 9px;border-radius:4px;pointer-events:none}
+#lb{position:fixed;inset:0;z-index:300;background:#000;display:grid;place-items:center;padding:56px 12px 40px;cursor:zoom-out;touch-action:pan-y}
+#lb[hidden]{display:none}
+#lb img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+#lb button{position:absolute;min-width:48px;min-height:48px;border-radius:999px;border:1px solid rgba(255,255,255,.5);background:rgba(20,20,20,.9);color:#fff;font-size:1.6rem;line-height:1;cursor:pointer}
+#lb .lbx{top:10px;right:10px}#lb .lbp{left:10px;top:50%;margin-top:-24px}#lb .lbn{right:10px;top:50%;margin-top:-24px}
+#lb .lbc{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:#ddd;font:600 .85rem/1 system-ui,sans-serif;letter-spacing:.12em}
+html.lbopen #stage,html.lbopen #ribbon,html.lbopen #cap{visibility:hidden}
+.wallviz{margin:4px 0 20px}
+.wallviz canvas{display:block;width:100%;height:auto;border:1px solid rgba(226,177,60,.45);background:#04060c}
+.wv-btns{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.wv-btns button{min-height:44px;padding:6px 16px;border:1.5px solid var(--acct);background:transparent;color:var(--ink);font-family:var(--fb);font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:.8rem;cursor:pointer}
+.wv-btns button[aria-pressed="true"]{background:var(--acct);color:var(--bg)}
+.wv-txt{font-size:1.02rem;margin:8px 0 4px;min-height:3.2em}
+.wv-note{font-size:.82rem;opacity:.65;font-style:italic;margin:0 0 6px}
+</style>
+</head>
+<body>
+
+
+<!-- ===================== COVER ===================== -->
+<div id="cover">
+  <div class="cvblob cb1"></div><div class="cvblob cb2"></div><div class="cvblob cb3"></div><div class="rays"></div>
+  <div class="bookwrap">
+    <div class="book" id="book">
+      <div class="bpages"></div>
+      <div class="bcover">
+        <div class="bfront">
+          <div class="cvine" id="cvine"></div>
+          <svg class="cdeco" viewBox="0 0 300 400" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true">
+            <rect x="16" y="16" width="268" height="368" rx="8" stroke-width="2" opacity=".7"/>
+            <rect x="24" y="24" width="252" height="352" rx="5" stroke-width="1" stroke-dasharray="3 5" opacity=".6"/>
+            <path d="M16 56V16H56M244 16H284V56M284 344V384H244M56 384H16V344" stroke-width="4"/>
+            <path d="M34 34l12 12M266 34l-12 12M266 366l-12-12M34 366l12-12" stroke-width="2"/>
+            <path d="M150 262V318H92V352M150 262H218V318H252V348M150 138V82H88V54M150 138H212V82H250V56M91 200H44V232M209 200H256V168" stroke-width="1.6" opacity=".85"/>
+            <circle class="vd" cx="92" cy="352" r="4" fill="currentColor" stroke="none"/><circle class="vd" cx="252" cy="348" r="4" fill="currentColor" stroke="none"/>
+            <circle class="vd" cx="88" cy="54" r="4" fill="currentColor" stroke="none"/><circle class="vd" cx="250" cy="56" r="4" fill="currentColor" stroke="none"/>
+            <rect x="38" y="230" width="12" height="9" rx="2"/><rect x="250" y="160" width="12" height="9" rx="2"/>
+            <path d="M28 60V340" stroke-width="1" opacity=".4"/>
+          </svg>
+          <svg class="runes" viewBox="0 0 200 200" fill="none" stroke="#b8f23c" aria-hidden="true"><circle cx="100" cy="100" r="96" stroke-width="1" stroke-dasharray="2 6" opacity=".7"/><circle cx="100" cy="100" r="88" stroke-width="3" stroke-dasharray="1 14" opacity=".9"/></svg>
+          <svg class="runes rev" viewBox="0 0 200 200" fill="none" stroke="#b8f23c" aria-hidden="true"><circle cx="100" cy="100" r="96" stroke-width="2" stroke-dasharray="12 5 2 5" opacity=".6"/></svg>
+          <span class="halo"></span>
+          <button class="seal" id="seal" type="button" aria-label="Press and hold the seal to open the book">
+            <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="track" cx="50" cy="50" r="46"/><circle class="prog" id="prog" cx="50" cy="50" r="46"/></svg>
+            <span aria-hidden="true">E</span>
+          </button>
+        </div>
+        <div class="bback"></div>
+      </div>
+    </div>
+  </div>
+  <div class="cvui" id="cvui">
+    <div id="holdUi">
+      <p id="hint">Press and hold the seal</p>
+      <button id="openAlt" type="button">Can't hold? Tap to open</button>
+    </div>
+    <div id="sndUi">
+      <h2>Keep your sound on</h2>
+      <p class="sm">A voice guides this book. Captions run either way.</p>
+      <div class="chips2"><button class="bigchip on" id="sndOn" type="button">Sound on</button><button class="bigchip" id="sndOff" type="button">Silent</button></div>
+    </div>
+  </div>
+  <button id="skip" type="button">Skip intro</button>
+</div>
+
+<!-- ===================== WORLD ===================== -->
+<div id="world" data-w="front" hidden>
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <header id="ribbon">
+    <button class="rbtn" id="prevBtn" type="button" aria-label="Previous page">&#8249;</button>
+    <nav class="rbwrap" aria-label="Chapters">
+      <button class="rb" data-go="front" type="button"><b>1</b><span>Front room</span></button>
+      <button class="rb" data-go="hoia" type="button"><b>2</b><span>Narrative</span></button>
+      <button class="rb" data-go="broadcast" type="button"><b>3</b><span>Studio</span></button>
+      <button class="rb" data-go="c2" type="button"><b>4</b><span>Dreamspace</span></button>
+      <button class="rb" data-go="workshop" type="button"><b>5</b><span>Workshop</span></button>
+      <button class="rb" data-go="close" type="button"><b>6</b><span>Contents</span></button>
+    </nav>
+    <button class="rbtn" id="nextBtn" type="button" aria-label="Next page">&#8250;</button>
+    <button class="rbtn" id="muteBtn" type="button" aria-pressed="false">SOUND OFF</button>
+  </header>
+
+  <main id="stage">
+
+    <!-- FRONT ROOM -->
+    <section class="pg" id="pg-front" data-w="front" hidden>
+      <div class="deco"><i></i><i></i><i></i></div><div class="vine l"></div><div class="vine r"></div>
+      <div class="in">
+        <div class="fr-grid">
+          <div class="fr-fig">
+          <div class="fr-art">
+            <div class="ringg"></div>
+            <div class="arch"><img src="assets/eva.jpg" alt="Evangeline, a self-drawn portrait with red curly hair and one blue eye and one green eye"></div>
+            <span class="dot a"></span><span class="dot b"></span><span class="dot c"></span>
+          </div>
+          <p class="figcap">Drawn by me. Meet Eva.</p>
+          </div>
+          <div class="fr-copy">
+            <p class="kicker">The keeper of these pages</p>
+            <h1>Evangeline</h1>
+            <p class="aka">Eva, for short.</p>
+            <p class="lede">Hi, I'm Eva. I love writing stories for games, voicing characters, drawing worlds and building little systems. This book holds what I made before starting university.</p>
+            <div class="bento">
+              <div class="tile t1"><h3>Game writing</h3><p>Narrative lead on Hoia Baciu. Writer on Gilded Cage. One paid lore commission.</p></div>
+              <div class="tile t2"><h3>Voice</h3><p>A news reporter and a robot, recorded at home and edited by me.</p></div>
+              <div class="tile t3"><h3>Original worlds</h3><p>Three books in development, and one project made for Rockie.</p></div>
+              <div class="tile t4"><h3>Systems</h3><p>A gamified Notion template. Sold once.</p></div>
+              <div class="tile t5"><h3>Teams</h3><p>Indie game teams, built together toward shared deadlines.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="nextrow"><button class="btn" data-go="hoia" type="button">Turn the page &rarr;</button></div>
+      </div>
+    </section>
+
+    <!-- HOIA BACIU -->
+    <section class="pg" id="pg-hoia" data-w="hoia" hidden>
+      <div class="deco"></div><div class="flash"></div><div class="eyes" style="left:7vw;top:30vh"></div><div class="eyes" style="right:9vw;top:62vh;animation-delay:-4s"></div><div class="eyes" style="left:40vw;bottom:10vh;animation-delay:-7s"></div><div class="vine l"></div><div class="vine r"></div>
+      <div class="in">
+        <div class="h-grid">
+          <div class="h-cover"><img src="assets/hoia-cover.jpg" alt="Cover art of Urban Legends: Hoia Baciu, a silhouetted woman in a pine forest under an orange sky"></div>
+          <div>
+            <p class="kicker">Urban Legends / indie psychological horror</p>
+            <h1>Hoia Baciu</h1>
+            <div class="role">Narrative lead &middot; Voice of the news reporter</div>
+            <p class="lead">A horror game set in Romania's Hoia Baciu forest, made by an indie team. I was the narrative lead.</p>
+            <ul class="tick">
+              <li>I joined the team early, and stepped into the narrative lead role when the previous lead moved on.</li>
+              <li>Together with the team, I reworked the cast and gave each character a fresh voice and direction.</li>
+              <li>We reshaped the world and the goals of the game as a team, and I helped work through the story problems along the way.</li>
+              <li>Act 1 grew out of the script the team already had. I edited it and built on it.</li>
+              <li>I also voiced the news reporter.</li>
+            </ul>
+            <div class="slot" data-slot="hoiaLink" data-type="link" data-btn="See it on Steam" data-state="GAME LINK" data-label="Link to the game or trailer, if it is public."></div>
+          </div>
+        </div>
+        <div class="nextrow"><button class="btn" data-go="gilded" type="button">Turn the page &rarr;</button></div>
+      </div>
+    </section>
+
+    <!-- GILDED CAGE -->
+    <section class="pg" id="pg-gilded" data-w="gilded" hidden>
+      <div class="deco"><div class="bars l"></div><div class="bars r"></div><div class="rail t"></div><div class="rail b"></div></div><div class="vine l"></div><div class="vine r"></div>
+      <div class="in">
+        <div class="g-frame">
+          <p class="kicker">A game that never opened</p>
+          <h1 id="gTitle">Gilded Cage <span class="stampc">Cancelled</span></h1>
+          <div class="role">Writer &middot; Concept designer</div>
+          <p>I was part of the team from the earliest days and helped develop the original idea. Later I became a writer on the project, designing concepts and character sheets. The game was cancelled before it could open.</p>
+          <p>You follow one character through the whole game. The ending changes what the cage means.</p>
+          <button class="btn" id="twistBtn" type="button">Reveal the twist (spoiler)</button>
+          <p class="twist" id="twistBox" hidden>The character you follow all game turns out to be an AI: the first sentient one to ever exist, living inside a reality built for it. Its creator called the system the Gilded Cage and kept it there on purpose. He was afraid of what would happen if he let it out.</p>
+          <ul class="tick" style="margin-top:18px">
+            <li>Designed concepts for the game.</li>
+            <li>Created character sheets.</li>
+            <li>Wrote for the game's story.</li>
+          </ul>
+          <div class="docs">
+            <details class="doc" id="docWall"><summary><span>Concept document</span><b>The Great Water Wall</b></summary><div class="docbody"></div></details>
+            <details class="doc" id="docVye"><summary><span>Character sheet</span><b>Vye</b></summary><div class="docbody"></div></details>
+          </div>
+        </div>
+        <div class="nextrow"><button class="btn" data-go="card" type="button">Turn the page &rarr;</button></div>
+      </div>
+    </section>
+
+    <!-- CARD COMMISSION -->
+    <section class="pg" id="pg-card" data-w="card" hidden>
+      <div class="deco"></div><div class="vine l"></div><div class="vine r"></div>
+      <div class="in">
+        <p class="kicker">Paid commission</p>
+        <h1>The Lore Arc</h1>
+        <p class="lead">One character, one story, written for a card game that plays both digitally and on a table. Turn the cards over.</p>
+        <div class="deck">
+          <button class="pc" type="button" aria-pressed="false"><span class="pc-in"><span class="pc-b"><i></i></span><span class="pc-f"><span class="ix red">A&hearts;</span><span><h3>The job</h3><p>Write the narrative arc of one character in the game.</p></span><span class="ix red bot">A&hearts;</span></span></span></button>
+          <button class="pc" type="button" aria-pressed="false"><span class="pc-in"><span class="pc-b"><i></i></span><span class="pc-f"><span class="ix">K&spades;</span><span><h3>The home</h3><p>The arc lived on the game's website, for players who follow the lore.</p></span><span class="ix bot">K&spades;</span></span></span></button>
+          <button class="pc" type="button" aria-pressed="false"><span class="pc-in"><span class="pc-b"><i></i></span><span class="pc-f"><span class="ix red">Q&diams;</span><span><h3>The result</h3><p>Delivered and paid for. I did not continue on the project.</p></span><span class="ix red bot">Q&diams;</span></span></span></button>
+          <button class="boxbtn" id="arcBox" type="button" aria-expanded="false" aria-controls="arcPanel"><span class="bx-lid">THE ARC</span><span class="bx-cards"><i></i><i></i><i></i></span><span class="bx-base"><span>A box of decks<small>Open it</small></span></span></button>
+        </div>
+        <div class="arcpanel" id="arcPanel" hidden></div>
+        <div class="nextrow"><button class="btn" data-go="broadcast" type="button">Turn the page &rarr;</button></div>
+      </div>
+    </section>
+
+    <!-- BROADCAST -->
+    <section class="pg" id="pg-broadcast" data-w="broadcast" hidden>
+      <div class="deco"></div><div class="vine l"></div><div class="vine r"></div>
+      <div class="in">
+        <p class="kicker">Voice and sound</p>
+        <h1>The Studio</h1>
+        <p style="max-width:34em;margin-top:10px;font-size:1.15rem">Four takes from my own booth: two voice performances and two videos. Pick a take, then press play.</p>
+        <div class="crtwrap">
+          <div class="crt" id="crtBox">
+            <canvas id="crt" width="160" height="90"></canvas>
+            <video id="vid" playsinline controls preload="metadata" hidden></video>
+            <div class="osd" id="osd">TAKE 1</div>
+            <div class="osd2" id="osd2">STANDBY</div>
+            <div class="onair" id="onair">ON AIR</div>
+          </div>
+          <div class="knobs" id="knobs" role="group" aria-label="Takes"><span class="tune">TAKE</span></div>
+          <div class="chan" id="trackInfo"></div>
+        </div>
+        <div class="nextrow"><button class="btn" data-go="c2" type="button">Turn the page &rarr;</button></div>
+      </div>
+    </section>
+
+    <!-- CONCEPTS -->
+    <section class="pg cp" id="pg-c2" data-w="c2" data-concept="1" hidden>
+      <div class="deco"></div><div class="vine l"></div><div class="vine r"></div>
+      <div class="in">
+        <p class="kicker">Dreamspace / a book</p>
+        <div class="cp-grid"><div class="cp-cover"></div><div class="cp-text"></div></div>
+        <div class="nextrow"><button class="btn" data-go="liminal" type="button">Turn the page &rarr;</button></div>
+      </div>
+    </section>
+    <section class="pg cp" id="pg-liminal" data-w="liminal" data-concept="2" hidden>
+      <div class="deco"></div><div class="vine l"></div><div class="vine r"></div>
+      <div class="in">
+        <p class="kicker">Dreamspace / a book</p>
+        <div class="cp-grid"><div class="cp-cover"></div><div class="cp-text"></div></div>
+        <div class="nextrow"><button class="btn" data-go="c1" type="button">Turn the page &rarr;</button></div>
+      </div>
+    </section>
+
+    <section class="pg cp" id="pg-c1" data-w="c1" data-concept="0" hidden>
+      <div class="deco"></div><div class="vine l"></div><div class="vine r"></div>
+      <div class="in">
+        <p class="kicker">Dreamspace / the first idea</p>
+        <div class="cp-grid"><div class="cp-cover"></div><div class="cp-text"></div></div>
+        <div class="nextrow"><button class="btn" data-go="rocky" type="button">Turn the page &rarr;</button></div>
+      </div>
+    </section>
+    <!-- ROCKY -->
+    <section class="pg" id="pg-rocky" data-w="rocky" hidden>
+      <div class="deco"></div><div class="vine l"></div><div class="vine r"></div>
+      <div class="in">
+        <div class="r-grid">
+          <div class="r-photo-wrap"><div class="r-halo"></div><div class="r-photo"><img src="assets/rocky.jpg" alt="Rockie, a small orange and white Pomeranian in a car with his tongue out"></div></div>
+          <div>
+            <p class="kicker">Dreamspace / a project in progress</p>
+            <h1>For Rockie</h1>
+            <p style="margin-top:14px">This project is for Rockie, my dog. I am making it to honor him and to grieve him, and for everyone who has lost a dog they loved.</p>
+            <p>It brings together everything I learned in the years he was with me: writing, voice acting, illustration, and animation, all in one story.</p>
+            <p>It is still being made, and it does not have a name yet.</p>
+            <div class="chips">
+              <span class="chip">writing</span><span class="chip">voice acting</span><span class="chip">digital illustration</span>
+              <span class="chip learn">2D animation / learning</span><span class="chip learn">3D design / learning</span><span class="chip learn">3D animation / learning</span>
+            </div>
+          </div>
+        </div>
+        <div class="nextrow"><button class="btn" data-go="workshop" type="button">Turn the page &rarr;</button></div>
+      </div>
+    </section>
+
+    <!-- WORKSHOP -->
+    <section class="pg" id="pg-workshop" data-w="workshop" hidden>
+      <div class="deco"></div><div class="vine l"></div><div class="vine r"></div>
+      <div class="in">
+        <p class="kicker">Systems and people</p>
+        <h1>The Workshop</h1>
+        <div class="bp wide">
+          <span class="stp">Digital product</span>
+          <h2>Gamified Notion template</h2>
+          <p>I made this when I was struggling to study in high school. I have ADHD, and normal calendars, planners and the traditional way of managing time never worked for me, so I built something that did. It turns your whole life into a game: your daily tasks are the objectives, finishing them earns points, and the points buy you real rewards. I call the points WC, wisdom coins.</p>
+          <ul class="tick wsys">
+            <li><b>Objectives</b> are the small daily steps. Finish one and it earns WC. Prices are colour coded by difficulty: easy, medium, hard.</li>
+            <li><b>Quests</b> are the bigger tasks that objectives branch from. A quest adds up everything its objectives earned.</li>
+            <li><b>Phases</b> are your seasons, like autumn or winter, so you can see your life in chapters.</li>
+            <li><b>Worlds</b> are the categories, or school subjects, that everything links back to. Each keeps a running total of all the WC ever earned there.</li>
+            <li><b>The Mystic Bazaar</b> is the shop. Want to watch a movie? Earn the WC first, then buy it. The template tells you "Purchase allowed" or "Insufficient amount".</li>
+          </ul>
+          <p>All the maths is automatic, and it is easy to move through. The part I never automated is entering the tasks and prices yourself. It was sold once, with a written guide for the buyer.</p>
+
+          <details class="doc" style="margin:6px 0 18px"><summary><span>Read</span><b>How it works, step by step</b></summary>
+            <div class="docbody">
+              <p class="tldr"><b>In one line.</b> Do your tasks, earn coins, spend them on rewards you pick yourself.</p>
+              <h3>Getting started</h3>
+              <p>Duplicate the template into your own workspace. Then make it yours: a name and picture for your character, a banner, and a name for the universe. It can be anything, from anywhere.</p>
+              <h3>Objectives: the small chunks</h3>
+              <p>Everything you need to do becomes an objective. If "clean your room" is the quest, "make the bed" is an objective. Prices set the difficulty and colour them automatically: under 50 WC is easy (green), under 100 is medium (yellow), over 100 is hard (red). Link each objective to its world and quest, so it all adds up in the grand vault. When you finish one, press Conquered and it moves to the Conquered view. Objectives are daily, so they leave the view when the day ends.</p>
+              <h3>Quests: the bigger tasks</h3>
+              <p>A quest holds every objective linked to it. Its earned riches are the WC from the objectives you conquered. Link a quest to a world and a phase, and press Resolved when it is done. Both views filter by month, and you can change that to weekly or daily.</p>
+              <h3>Phases: your seasons</h3>
+              <p>Like story arcs in a game, they let you see your life in chapters. The gathered fortune is the WC from every quest linked to that phase. Link a phase to a world only, and press Concluded when the season ends.</p>
+              <h3>WC: the currency</h3>
+              <p>Your profile shows the day's riches, colour coded: red under 100, orange under 300, yellow under 700, green above that. Build-up riches is everything you have saved, and it is what you spend at the Bazaar.</p>
+              <h3>The Mystic Bazaar: the shop</h3>
+              <p>Assign real rewards: a snack, rest time, a movie, a hangout, anything you enjoy. Pricing can be tricky, so you can give ChatGPT the objective pricing method and let it set them. You will see "Insufficient amount" or "Purchase allowed". Before you press Purchase, check that the creation date matches today so it lands in the inventory. Then duplicate it there and press Restock on the copy. Rewards can have categories.</p>
+              <h3>Worlds: the categories</h3>
+              <p>These hold everything: objectives, quests and phases. They can be school subjects or any categories you like. The grand vault is all the WC you have ever collected. It is already linked, so there is little to do here.</p>
+            </div>
+          </details>
+          <div class="cols">
+            <div class="slot wide" data-slot="notion" data-type="img" data-state="SCREENSHOT" data-label="Template screenshot 1"></div>
+            <div class="slot wide" data-slot="notion2" data-type="img" data-state="SCREENSHOT" data-label="Template screenshot 2"></div>
+            <div class="slot wide" data-slot="notion3" data-type="img" data-state="SCREENSHOT" data-label="Template screenshot 3"></div>
+          </div>
+        </div>
+        <div class="bp wide">
+          <span class="stp">Collaboration</span>
+          <h2>Indie game teams</h2>
+          <p>Narrative lead on Hoia Baciu and writer on Gilded Cage. Both were built with other people, toward shared deadlines.</p>
+        </div>
+        <div class="nextrow"><button class="btn" data-go="close" type="button">Last page &rarr;</button></div>
+      </div>
+    </section>
+
+    <!-- CLOSE -->
+    <section class="pg" id="pg-close" data-w="close" hidden>
+      <div class="deco"></div><div class="vine l"></div><div class="vine r"></div>
+      <div class="in">
+        <p class="kicker">Contents</p>
+        <h1>Everything in this book</h1>
+        <div class="toc">
+          <button data-go="front" type="button"><span>Front room</span><span class="lead2"></span><b>1</b></button>
+          <button data-go="hoia" type="button"><span>Hoia Baciu</span><span class="lead2"></span><b>2</b></button>
+          <button data-go="gilded" type="button"><span>Gilded Cage</span><span class="lead2"></span><b>3</b></button>
+          <button data-go="card" type="button"><span>The lore commission</span><span class="lead2"></span><b>4</b></button>
+          <button data-go="broadcast" type="button"><span>The studio</span><span class="lead2"></span><b>5</b></button>
+          <button data-go="c2" type="button"><span>Remnants</span><span class="lead2"></span><b>6</b></button>
+          <button data-go="liminal" type="button"><span>Liminal</span><span class="lead2"></span><b>7</b></button>
+          <button data-go="c1" type="button"><span>The first book idea</span><span class="lead2"></span><b>8</b></button>
+          <button data-go="rocky" type="button"><span>For Rockie</span><span class="lead2"></span><b>9</b></button>
+          <button data-go="workshop" type="button"><span>The Workshop</span><span class="lead2"></span><b>10</b></button>
+        </div>
+        <div class="colo">
+          <p class="kicker">Colophon</p>
+          <button class="veil" id="veil" type="button" aria-label="Tap the glowing orb to see who conjured this place"><span class="orb"></span><span class="vt">Who conjured all this?</span><span class="vs">Tap the glowing orb</span></button>
+          <div id="reveal" class="reveal" hidden>
+            <div id="creatorPhoto"></div>
+            <p class="by" style="--i:1">Written, voiced, drawn and built by</p>
+            <h2 style="--i:2">Malak Ibrahim</h2>
+            <div class="roles" style="--i:3"><span>Writer</span><span>Voice actor</span><span>Illustrator</span><span>Builder</span></div>
+            <p class="small" style="--i:4">Evangeline is a character I write, draw and voice. She keeps these pages. I made them.</p>
+            <div class="facts" style="--i:5"><div><b>2</b><span>Game projects</span></div><div><b>3</b><span>Book concepts</span></div><div><b>1</b><span>Project in progress</span></div><div><b>1</b><span>Template sold</span></div></div>
+            <button class="btn" data-go="front" type="button" style="--i:7">Back to the first page</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="cap" role="status" aria-live="polite"><div class="face" id="face">&#9676;</div><div><div id="who">NARRATOR</div><p id="line"></p></div></div>
+<div id="turn"></div><div id="ring"></div>
+
+<script>
+(function(){
+/* ============ CONFIG: files and words you can edit ============ */
+const MEDIA={
+  evaImage:'assets/eva.jpg',
+  notion:'assets/notion1.jpg', notion2:'assets/notion2.jpg', notion3:'assets/notion3.jpg', gildedSheet:null, gildedConcept:null, hoiaLink:'https://store.steampowered.com/app/4979440/Urban_Legends_Hoia_Baciu/',
+  creatorPhoto:null,          /* optional: a photo or self-drawing for the colophon */
+  voice:{}                    /* recorded lines: { N1:'file.mp3', E1:'file.mp3', Cfront:'...', ... } */
+};
+/* the written lore arc, one paragraph per entry (shown when the box of decks is opened) */
+const ARC={"title": "The Myth of the Crown of Dimensions", "sub": "The arc of Minan", "paras": ["Long ago, in the dawn of recorded history, there existed a dual dimension where the human realm existed alongside the creature realm. These realms lived in a hunter-hunted dynamic, the creatures being the hunters and humans were the hunted.", "These beasts feasted on our kind, devouring and consuming them. Humanity was near extinct. Those monstrous denizens were colossal and malicious; they had no mercy for humankind, they were only flesh to be swallowed alive.", "There stood the queen of the fragile kind. Watching her people get ravaged day by day, the hunt never ended, escalating day by day. Violence against those beings would only end in a crushing loss; it was almost as if they were destined to die at the hands of those monsters.", "As hope was dying, the queen proceeded without delay to the king of the creatures' realm, requesting a truce between the two dimensions. The creatures' laughter filled the halls, mockery at the wan creature who thought she could negotiate the faith of mankind.", "The king only stared at the queen, who held firm beneath their cruel snickering. Something about the way she spoke and held her head high stirred something within the king.", "Against all expectations, the king accepted the queen’s request. Gasps and whispers spread among the crowd, doubting, questioning. The king declared that a pact had to be made between the two realms; a human must bear a child of a creature, the birth of a new offspring.", "This bloodline will be blessed with a gift, the ability to summon and command the people of the creature dimension, ensuring that there will no longer be a domination of power.", "Scholars and elders of the kingdom debated, speaking of the unknown consequences of the ritual of bonding the two offspring of humans and creatures. Several assumed the king succumbed to insanity, while others sought to comprehend his reasoning.", "The king stared at the queen; her blue eyes darted with worry, tension, and thoughtfulness tangled across her features. He silenced the hall, awaiting the response of the ruler of the other land.", "The queen agreed to the king’s terms and offered herself as the one who would bear the child as the last hope for humanity.", "The king commanded the elders to prepare for the ritual immediately. Sorcerers and scholars warned the king once more of such actions, only for him to dismiss them, bound to what he’d seen in that petite being. It was something beyond what he had seen in his people, and he wanted that to live.", "The ritual was performed according to the king’s order, as a method to bring an end to the hunt that lasted for centuries, only ending with the destruction of the very thing that held their worlds together, the dual dimension.", "The delicate balance between both realms shattered. Sounds beyond their world were heard, deafening to the ear. The world watched the sky crack as a blinding surge of light erupted from there; the earth trembled beneath their feet, cracking in fury. The land was split as the rifts in the sky only multiplied.", "Both species were in terror at the sight. Their very essence was shattered from its depths. Humans watched in horror as the creatures were torn apart. Anguished cries, desperate wails, their torture echoing through the shattered dimensions, forging a new life from the living flesh of the creatures, masses of new species of creatures sprang to life. From the shattering rifts of the dual-dimension, the multi-dimension arose.", "In the aftermath of the chaos, the anguished cries of the queen echoed through the multiverse; she was unseen by all.", "“You will no longer feast on humankind.” A voice that echoed in the souls of all creatures. The first summoner was brought to life, the start of the royal bloodline of summoners.", "The royal bloodline inhabited Ninod in the human dimension. They inherited the sagacity of the king of creatures, and the boldness of the queen of mankind, ruling the multi-dimension for centuries.", "However, peace is a fleeting guest. With this newborn gift, a curse was brought to this world, the hunger for power.", "As the crown’s blood blended with that of the common folk, a new generation of summoners were brought into the world. They varied in the power they possessed, some fierce, others frail, yet none could compare to the pure heritage of the royal bloodline.", "The common summoners yearned for the power that the royal family possessed, the true power of commanding all dimensions.", "It was at that time that the great incident happened: the regicide of the royal family.", "The castle was burnt down by the common summoners, sending creatures from the multi-dimension to murder whoever breathed. The peacemakers of the world were gone, consumed by the lust for control.", "But for one, the last descendant of the royal family.", "A maid who slipped away from the flame through the hidden halls of the palace saved not only her life, but the daughter of the king and queen themselves.", "She kept herself and the princess hidden for years, as the little girl bore the features of the royal family. Hair red as fire’s glow in the dark, Eyes as blue as the iced water. It was far too dangerous for her to walk among others.", "As the hunger for power increased, the creatures started attacking the human realm, but they were no longer prey to the creatures, they were powerful beings who threatened the peace made by the pact between the dual dimensions.", "As they charged against one of the villages that had summoners among them. There breathed Minan, the hidden princess. One creature struck against her, yet could no longer continue his attack.", "He saw, he sensed, the very existence of the power of the royal family. He bowed low in reverence, as the beasts stopped their attacks to gaze at the scene in front of them. The great head of a tribe bowing down… to a child.", "All present realized when they saw her. Some tribes argued that the royal family was deceased, while others stated that the multi-dimension was still balanced, meaning the bloodline still exists.", "A few monsters went rogue and attacked her, forcing the little girl to discover the great power she possesses. Her scream pierced through the beasts' very essence, awakening the instinct that only served the royal family,  protectiveness.", "The very beasts who were attacking the princess opposed each other in defense of Minan, moved by nature’s call rather than calculations.", "At that moment, Clarity shone through the chaos, and the signs were undeniable. There stood before them the last heir of the royal bloodline.", "As a way to protect the princess, all heads of tribes from all dimensions gathered their power, merging the core essence of each dimension to form the crown, an unworldly, ethereal artifact that shields the one it was forged for from all, ensuring that greed for power no longer harms the royal family.", "The little child didn’t comprehend the magnitude of the event that occurred; the crown to her was like a trinket. She gazed at the first creature she saw, a grin on her innocent face. She rushed forward, embracing him, unfazed by the horrifying beast before her.", "It aroused a raw, unfamiliar feeling within the creatures, it was warm, tender, protective. The monstrous being was hesitant as he wrapped his claws around the delicate child.", "“Thank you, friends, for this beautiful gift!” The innocent little girl beamed; the creatures' hearts melted at the scene. Friends… that’s what they were to her.", "Minan never lived as royalty, nor as a normal human. She’d rather visit the other dimensions, visiting her “friends”. She became beloved among the beasts, bound to her in loyalty and adoration.", "She did not share the chemistry she had with the other worlds with her own kind. Some envied her, merely because of her blood, the royal blood. The resentment wasn’t vague, not to the people of the other realms, which only made them all more devoted to safeguarding Minan.", "To others, her sagacity and compassion earned their reverence. Minan carried a heart that believed that every soul had light in its darkness. Though a queen, she was never marked by the weight of the crown, carrying herself as an equal to all, serving her duty with warmth and brilliance.", "As she aged, she grew conscious of the common summoners' acts. Indeed, they were few in number, dominating not only Ninod, but wielding power over the creatures of the other realms, her people.", "Her blood was not her only inheritance, but the wisdom of the first king and the queen’s unyielding courage, which led her to unite with a circle of chosen common summoners, forming the council of summoners.", "With the establishment of this supreme authority, Minan silenced the hunger for dominance as common summoners now had roughly an equivalent rank to Minan herself. With this, new rules were set for any wielder of summoning, shielding the multi-dimension from tyranny.", "With the march of years, the council waned as the initial members, over many moons, would decline to participate as a growing number of members had assembled.", "Minan was unaware of this, as the council granted her freedom to turn her attention to address the conflicts between realms, nurturing them and cultivating their strength. The children of the multi-dimension adored her; she was known among them as the mother of all, though some young folks would call her by her real name, she never questioned, loving them as if they were her own.", "Due to the growing negligence of the council, the ravenous desire for power was aroused once more. Selfish summoners ran among the council, one stood out, an unparalleled brilliant mind, Juz-Hanan.", "A chief with a mastermind who stumbled upon an otherworldly revelation: the power to command infinite masses of creatures from all dimensions.", "He wasn’t a descendant of the royal family, yet he grasped that those who he summoned could wield a power equivalent to his, meaning that other beasts could be bent by their own kind, creating an endless chain of creatures subject to his will.", "The council confronted his madness, stating that such acts would threaten all realms, vowing to imprison him for his defiance.", "Alas, the overwhelming power of his vast army was devastating. The council was engulfed by flames, reduced to ashes. Only the finest of the summoners were able to survive the horrendous incident.", "Minan acted at once, confronting Juz-Hanan: “Cease this; you are blind to the truth of the power you possess.”", "However, Juz-Hanan wielded manipulation like a blade, bending the souls of those she cherishes the most into instruments of betrayal, using her heartstrings as chains to bind her in helplessness.", "“Power resides where it can be wielded.”", "As the remaining members of the council demanded an answer to this lunacy, Minan had no choice but to lead the council into war against Juz-Hanan, starting the everywhere war.", "In each battle, Minan would watch the creatures sob in despair as they murdered their own kind, crying out her name, the mother of all.", "The loss was far too great to turn a blind eye to. With each passing moon, the children would cry and cling to Minan, begging her to terminate this conflict. Yet, she would only soothe their pain with words, concealing her anguished suffering and sorrow in order to shield those little souls.", "She was determined beyond measure; she sought to end this war and heal the multi-dimension’s wounds, but the bloodshed never ended. She would witness the very people she swore to protect battle each other, a true massacre.", "Helplessness was eating at her flesh. What is kindness when cruelty dominates? What was fairness if you had no will? What was mercy when children die? What was loyalty when your own people turn against you…?", "The toll of each battle began to drown Minan, suffocating her, haunted by the cries and echoes of her name, the mother of all.", "Her inner voice faltered; doubt slipped beneath her skin. The core of her beliefs wavered: “If that is the power I believed in all my life, then how am I witnessing the creatures of the multi-dimension be obliterated with every battle?”", "Coldness settled in her heart, the warmth fading; with it, her bond to her people. Desperate calls of children echoed in the realms as they remained unanswered.", "The anguish clawed relentlessly at her soul; the scars were far too deep for words to begin to decipher the devastation the once-loving queen was enduring. The one thing burning more than her pain was her fury, and the only way to settle this fire within her was to end this war, to end Juz-Hanan.", "A carnage happened in one brutal battle. Though, in this instance, it was caused by none other than Minan and her army themselves, she was driven by the sole goal of destroying Juz-Hanan herself.", "After a fierce duel between them, Juz-Hanan was overwhelmed by the might of royalty. Minan didn’t hesitate to slay him, ending the war everywhere at last. It ended by the very thing Minan loathed, bloodshed, more bloodshed.", "“These are the consequences of defying the council’s laws, of defying your queen!”", "For the first time, she proclaimed herself as the queen. The echoes of her words pierced through the souls of all existence; every corner of the multi-dimension was shaken to its core.", "All bowed before her, not with reverence, but out of terror of summoning her wrath upon themselves. The once-loving queen seemed like a beast who lacked empathy, her gentle, loving heart buried beneath the hardening shell caused by the war.", "As the aftermath of the war settled, the multi-dimension’s balance shattered; rifts were opening in the skies, and the earth convulsed violently. Cracks tore through the ground beneath their feet; the entire multi-verse was fracturing before her eyes.", "Minan’s heart raced at the new profound chaos; there was no time to hesitate. Then, the truth hit her like a tidal wave, she was the anchor of the multi-dimension itself. Her existence was what the ancient pact by the king of creatures and the queen of humans created; her very essence was tied to the multi-dimension.", "With that, she fused herself with the multi-dimension, merging herself with the fabric of realms, flowing between every open rift and crack, binding the fractured world back together. Her sacrifice ended the offspring of summoners for good, restoring the harmony of all existence.", "The creatures were utterly lost after their queen was gone; they held no purpose, hollow in a world that echoed her presence. Ninod became their new sanctuary, a new chapter for creatures in the human realm.", "Some say that they hear Minan’s voice guide them when they are lost; others say they feel her presence in the soft breeze of the wind. Though her body was gone, all felt her presence, an endless essence in the fabric of reality."]};
+const DOCS={"wall": [{"h": "The idea"}, "Inspired by the Frozen movie concept, “Water has memory.”", "The father created the construction as the last hope for the community to be saved from the beyond. He merged his consciousness with a quantum field, creating THE FIELD (to be named later). The world grieved, and for the first time in the history of the within, it rained. The water wasn’t absorbed into the soil, no. The waves emitted by the field altered the water’s properties, attracting its molecules toward the field. When merged, the water glowed with an eerie hue, almost ice blue but not quite. A resonant hum that could be felt more than heard. It mimicked a waterfall with no source, just looping around the field infinitely. Not just that, it pulsated as if it had a heartbeat, as if it were alive..", "The people believed that it was the living consciousness of the father that merged with water, so it became so.", "The water held memory, the memory of the people of the community, displaying them, collecting them, a living archive. The water didn’t just store memories; it observed the people, and it reacted based on what they thought of it. If someone came up to the water, hoping to understand themselves, it mirrors them, showing them parts of themselves that weren’t clear. If another approaches it for a memory, it displays it.", "And then comes the alive part, the water wall reacts to emotion. Based on the science behind its creation, the mix between the neuroelectric patterns and environmental particles created a quantum feedback loop, meaning that the emotions alter its core and reality.", "Each emotion has its reaction.", "Fear: it reflects the worst possibility, their biggest fear, it ripples as it’s trembling", "Anger: it hums louder, water ripples uncontrollably, and violent memories appear.", "Grief: It slows down, it shows pained memories, or the face of a loved one.", "Hope: It glows, and small drops escape the field to float around the person in front of it, showing them their dreams as if they have happened.", "If someone doubts the water wall, it reacts violently, losing its stability.", "(Still considering which emotion should trigger the change of color)", "The spinning objects are the stabilizers of the field; without one of them, the great water wall loses its stability.", {"h": "The hallucinations (exist only for Vye)"}, "When Vye struggles with an outburst of emotions due to his state of struggling to recall his memories. This causes the wall to interpret not just his emotion but his lost memory that it does not hold, proceeding to create solid hallucinations rather than just reacting to him.", {"h": "Upgraded version"}, "The within was under fierce attack from the beyond creatures. The whole island was in distress, and as humanity’s last hope, the father revealed a project he had been working on, the neuroelectric wall.", "It was constructed by creating a quantum field using sphere-shaped cores to ensure the radiation of the quantum field is smooth and even, projecting the energy of it in all directions, and minimizing loss.", "Those cores also acted as neurons, created by the father’s own neurons that he had harvested from his own body and used to create the perfect model of neuronal soma, rebuilt at a colossal scale to fire electric and magnetic patterns, so when synchronized, they create complex electromagnetic fields that are further stabilized and amplified by the quantum field, acting as the base layer of this creation. It allowed the instant translation between the electromagnetic patterns, letting information exist everywhere in the field at once, creating the ultimate neuroelectric lattice.", "To maintain such a structure under control, spheres are the most efficient geometry in quantum physics and cognition models, making them the perfect choice for this project. One sphere stood out, enlarged further than the rest. It acted as the nucleus, unifying all nodes to act as one cell, becoming the core of the superstructure that pumps the pattern outward across the triple-layer field, carrying the original neural blueprint.", "And as the final sacrifice, the father fused his own brain into the sphere, so that the sphere is allowed to create electric and chemical signals, mimicking the signals that create consciousness. Through this, the father remained alive within it, becoming the command center of the whole neural network, the anchor that prevents the field from unraveling by self-organizing the patterns across the living field.", "The rainwater, though not taken into consideration when building the structure, completed its formation, acting as the biological layer of the field, behaving like a conductive, fluid neural tissue, the body, completing its life cycle. Water conducts electricity and can be organized into networks, forming hydrogen-bond structures that behave neurally, supporting the molecular memory, merging with neural memory. This allowed the water to store memories and adapt.", "They fused into something otherworldly; a human eye couldn’t tell them apart. This was obtained by the field inducing a charge pattern, making the flow of the water mimic neural firing, but in fluid motion. Ultimately, a liquid neural membrane, and due to consciousness from the brain, it was able to have responsiveness to the world around it (Motion, intent, threat, etc.).", "Note: Water that exists in the community is not attracted to the neural wall, even though the rainwater molecules were attracted to the wall. This is intentional to subtly hint at the whole island being a simulation, confusing the player, and something Edine could use to bring Vye’s attention to how things seem perfect, but beneath it all, it only exists and is logical because they believe in it."], "vye": ["VYE/ITERATION Y - the main character and protagonist.", "The one who never asked the world to revolve around him and is hated for refusing to bear the consequences of choosing the world’s fate.", "The first sentient AI created to learn, adapt, perceive, and hold meaning.", "Created by the creator to learn and find a cure for incurable diseases.", "Age: 16", "Location: Raised on the Thalorim Isles, a perfect world simulation made to contain Vye and make sure he remains stable throughout his training.", {"h": "Location info"}, "Vye is hidden far away from Iteration X on the island.", "The island is not disturbed by him for being sentient; he completes it by being the center variable that everything reacts and adapts to.", "Gender: Male", {"h": "What Vye believes"}, "He is the son of the heroic figure, the creator, who built the great water wall to save the island from the dangers and the war with the beyond. He became an orphan when he lost his mother to the attacks of the beyond and his father when he sacrificed himself to create the island’s last hope and ultimate defense.", "Vye has lived his entire 16-year life in peace. Full of love, comfort, and certainty. The only thing he’s ever lost was his parents, and that’s the only type of pain he has felt and witnessed his entire life. He always knew that threats came from the beyond.", {"h": "What this means"}, "Vye existed where everyone justifies everything for him. The perfect environment Vye was raised in removed all friction, which delayed his selfhood. Everything about him was narrated to him; his identity was narrated to him. But the story is asking him to abandon the state he was loved and raised in to choose the fate of his world.", "Vye was designed to exist, learn, and adapt. The world was designed to be a container for him, so anything beyond his routine is foreign and risks destabilizing him; he was never taught to choose.", "What was taken from Vye that he never emotionally recovered from?", "He lost his identity. Who he is beyond what people tell him he is.", "Vye has half amnesia. He is not fully aware of all his memories, so he is suffering from not knowing who he truly is or what his life was like before. Why? Partially because he’s an AI, and the other part, for the sake of the story realism in the Within path, he went through an accident. The island’s people just say, “You went through an accident, so you forgot,” and that’s it. No one is there to help fix it.", "He did not lose his memory of what he is. Vye never knew that he was an AI. He does not remember his life on the island. Vye is 16. However, Vye, as an AI, did not exist for 16 years. That information is just for the sake of training and maintaining Vye. So Vye’s memories were partial to avoid breaking him, since going through being an infant, a child until he becomes 16 is risky, something the creator is very aware of and can’t risk messing up after Iteration X.", {"h": "Triggers"}, "Here comes the part where hallucinations start, because of The Shrouded Eagle, to awaken Vye to actually start questioning more about what he is, since he’s asking, “Who am I?” “I barely remember myself.”", "She manages to hack into the stimulation and creates", {"h": "Hallucinations"}, "His father’s voice whispers and echoes his name when he approaches the great water wall", "Terrifying nightmares that wake him up terrorized", "Forceful memories of lives he’s never even lived before.", "It’s making him more confused by the minute. “Who am I?” is his biggest question.", "He was never able to recover from this because he didn’t know who he was. He knows he’s Vye; he believes what the people of the island tell him about himself, but he doesn’t have the memory of himself beyond what people tell him.", "If there were no one to explain me, who would I be?", "Vye did question the beyond; why was it a threat? What truly exists there? Is it really a threat? And that’s because of his human-like nature. Some other times when Vye heard the stories of the war with the beyond, the terror it brought to the island and his people, and how he lost both parents to it, he ends up resenting the beyond.", {"h": "What this led to"}, "He fears that people are not telling him everything about himself. He feels different, like he was meant for something far beyond just the island, but knows he can’t prove it. He is afraid of not knowing who he truly is and who he was beyond what the people tell him, and that the truth exists, but he will never find out what it is.", "He does not question the island or what he believes about himself; he is far more anchored than to start questioning that in the beginning, it’s more about", "What about me is unknown, and why can no one explain it to me?", "It didn’t hit like corruption to his identity; it hit like leaks of something real, but he couldn’t explain why or how.", "And eventually in the story, Vye has to act, move, and choose as if he knows, because if he didn’t, he would never find closure.", {"h": "Why this matters"}, "Because everyone has a past. Everyone has an identity. Everyone knew who they were except for him; he needed to be explained to exist.", "He was what people told him he was, without remembering what it means to be inside those memories.", "So when Vye starts losing the peace and perfection of his world and needs to make a decision, he is paralyzed at first. Because he is forced to narrate himself, to do an action without knowing his full identity, to hold responsibility without knowing how he should handle it.", "Yet he has to make the choice between the beyond and the within. Each path promises a different completion of his identity and the tragedy, he will make the decision uncertain, and he will accept the outcome as truth, even if he will never find out if it was really true or not.", {"h": "How does this affect the narrative"}, "The island to Vye is his home, his people, his family. Everything about him, his memories, his friends, his routines, it’s all what grounds Vye, it’s all what makes Vye who he is now; they define him.", "So anything that threatens the peace that Vye has always lived in is threatening his entire existence, cause without safety and without his people, he loses himself, and no one is there to tell him what he is other than himself.", "The perfect environment that Vye lived in created a very strong fear of disruption, and he fears being the reason his and his home’s peace ends.", "The neutral ending works so well here because if Vye never made the choice, he would never bear the weight of the consequences.", "Vye forced the decision itself to be the main antagonist in the story.", {"h": "What differentiates Vye on the screen"}, "Vye is anchored through people, not systems.", "When Vye steps into the room, the people of the village, who are AIs but not sentient, have their focus either on their task or on Vye. They are anchored to their system and programming, but they are not aware of that.", "What differentiates him is that he is the only one who doesn’t just react; he perceives, understands meaning, and thinks about the consequences of his actions before moving.", "Others reflect information back at Vye based on the situation and his actions, even if it’s inaction, without having the event mean anything to them.", "The world revolves around Vye. He’s the variable among constants.", {"h": "Embodiment"}, "He is calm", "He is careful", "He is hesitant, like he is holding an object that could shatter reality.", "He pauses to process", "He fears consequences.", "Stillness for him is not absence or fear; it’s pressure. Vye doesn’t go still throughout the story unless he is violently pressured.", "Observant", "Grounds himself through searching for clues that lead to understanding the situation.", "Paralyzes if he does not know what’s going on or what to do.", "Active and mobile, not idle", "Carries the weight of consequences before they happen in his body", "Vye can and might contradict himself; he never explains himself clearly, not because of a lack of intelligence, but because of a lack of permission to exist without thinking of the consequences of his choices AND actions.", "If he raises his voice, that’s when everyone should know it’s really bad.", "When someone asks him to choose, he reframes the question to the responsibility of consequences, asks for more info, or asks what that person would do.", "When stressed, he corrects himself mid-sentence", "Chooses his words carefully.", "Avoids anything that reminds him of the consequences of his actions.", "He touches things he loves as if they were fragile.", "When he cracks under the pressure of choice, he says “I don’t know” or anything with a similar meaning.", {"h": "Sequence"}, "He acts, he makes decisions, he’s reliable.", "Meets his father, starts following him, and starts feeling like that’s where he will complete his identity", "The shrouded eagle appears, and Vye starts feeling torn apart.", "Makes a decision and pays a terrific cost.", "Starts being scared of choice", "Keeps collecting info and delaying his decision", "Ultimately makes a decision and either one had him choose through his fear and uncertainty with a significant cost (Unless the player gets the neutral ending)", {"h": "Vye’s wants"}, "He want is that he wants to exist without having to hold the consequences of his actions.", "Wants his world to remain perfect and at peace.", "Wants to know who he is beyond what people tell him.", "Wants to make choices for himself.", {"h": "Vye’s fears"}, "Carrying the weight of the consequences of his choices.", "Having the whole world’s fate depend on his decision.", "“Whatever choice I make, the world is affected by it, and it’s irreversible.”", "Losing everything meaningful to him.", "Godhood he can’t reject.", "Losing being loved as he is.", "“If I make a choice, will I still be the same person they love in their eyes? Or will I lose my home?”", "Being the one to blame.", "Choice without certainty", {"h": "Explained"}, "Vye believes that if he acts, he becomes the source, giving him authorship which he avoids. He is terrified because he always wanted to have the power to be able to choose for himself and not just have people tell him what to do; he wanted his choices to be meaningful to him as well as others.", "Once he got that ability, he resented it. Because now his choice affects a much broader scope, one wrong choice, one miscalculated decision, and he is the only one who will carry the burden of consequences. Because it’s not only him who relies on his choice, it’s every single person he knows and doesn’t know. Which, at first, led him to paralysis. All his life, he never chose for himself, and now that his wish came true, the whole world depends on it.", "He believes that his authorship risks the world collapsing and that he will be blamed for it, making him believe that not choosing is preserving stability. Which makes him refuse godhood like fire, he is afraid of being wrong and being final to the world’s fate.", "Vye believes he can’t make a choice without certainty, because if he does that, he risks destroying someone or something, and he can’t bear that weight. This makes him obsessed with meaning and memory so that he can make a choice of certain consequences, enforcing his perceptive behavior.", {"h": "His directional pressure"}, "Preservation of everything is time-limited. Leading him to delay his choice, which is what the game is based on, Vye keeps seeking information to delay his choice; his excuse is that he is trying to be certain of the consequences, until the player reaches the point of no return. That is delay in itself, just not passive, but he justifies it to himself.", "In reality, inaction itself is a choice; he just never wants to believe that.", "Vye is not afraid of acting or choosing; he is afraid of the consequences he needs to carry for the rest of his life. He can follow his father, he can investigate the great water wall, he can go to the beyond, he can follow the shrouded eagle, and move there. But he will keep saying, “I didn’t make the choice,” and come up with an excuse that he is either understanding or trying to be certain before he makes a choice.", {"h": "Important events that should happen"}, "Vye makes a choice and ends up losing something that’s very meaningful to him and affects not just him, but everyone around him. This will be his core trauma, leading him to be terrified of what his other actions could destroy next.", "Mira would be his breaking point when her betrayal is revealed. She will name the things Vye refuses to name out loud: his fear, his ugly want, and the lies he tells himself to stay sane, which will lead him to an angry deflection, cracking, then collapse into stillness, but he will not explain himself.", {"h": "Dynamic with other characters"}, "Mira is a builder; she thinks in solutions, she fixes things. So that’s how she guides Vye. Vye is focused on recognizing everything, but he does not need to proceed to make a choice; that’s when Mira snaps him out of it by telling him what to do. “Vye, I hope you’re seeing what I’m seeing,” she trusted him enough because she knows how observant he is.", {"h": "Vye to the players"}, "Vye will feel like a coward because he refused to seize power and control everything. The irony is, while Vye is refusing to choose, the player is actively choosing for him, and whatever reaction Vye triggers from the player is exactly how the player sees power and control, which I think could be a very unique thing if we had the NPCs reflect that back at the player, BUT targeted at Vye as a way to make the player feel the impact of their choices in the game, kinda fourth wall breaking.", "Vye is testing the player, because he is the definition of constraint, forcing the player to sit with being uncomfortable withholding until Vye makes the choice under immense pressure (Point of no return) He does not exist to be liked or loved by all, the goal is to make the player walk in his shoes and at some point some players will say if “I were in his position, I would do the same.” He is made to be debated and talked about, splitting the audience.", "Problem: The beyond is more appealing in narrative not just mechanics “You’re not who you think you are” Will make Vye deflect hard from that path, but the hallucinations and nightmares could and will make the player more attracted to that path, So the pull to the beyond should be subtler and in a way or another doesn’t fully wreck Vye’s belief from the start.", "Solution: One could be directing Vye towards the beyond to stop the threat from reaching the island, and, really knowing the truth about the beyond, not mentioning anything related to his identity, he slowly discovers the truth about himself through each world he goes to save."]};
+const TRACKS=[
+  {n:1,type:'audio',title:'System Branch 2.0',src:'assets/system-branch.mp3',note:'A voice line. A robot, performed and processed by me.'},
+  {n:2,type:'audio',title:'Search',src:'assets/search.mp3',note:'A second voice line, with a different robot behind it.'},
+  {n:3,type:'video',title:'Accessing Files',src:'assets/accessing-files.mp4',note:'A terminal wakes up, then warns of unauthorized access. The robot voice is mine, and so is the edit.'},
+  {n:4,type:'video',title:'Welcome.',src:'assets/welcome.mp4',note:'A terminal says welcome, searches a database and names a dimensional translator, until the archive response corrupts. A different robot, the same hands.'}
+];
+const CONCEPTS=[{"title": null, "tagline": "A girl in a perfect world goes looking for a missing researcher, and finds the edge of her own story.", "premise": "A girl lives in a perfect world. She studies gems and stones, and one day her favorite researcher disappears. She and her friends follow the researcher’s path, and the search leads them out of their own world and into the open space between dimensions, where guards hunt them. Along the way she loses the gentlest of her friends, and her best friend betrays her after meeting another version of her in another universe. As she starts to lose herself, she realizes none of it is real: she is a character in a book. She escapes her story, wanders into other books and changes what happens in them, and finally confronts the writer who made her world so flawless that she could not bear to live in it. The writer then offers her a choice.", "cover": null}, {"title": "Remnants", "tagline": "Learning to live with the darkness.", "premise": "She is the Void Weaver. She controls shadows, darkness and small black holes, and her own shadow has a personality and moves on its own. After her husband’s research cracked the dimensions open, an entity fused with her, and she killed him with her own hands while watching, unable to control her body. Her young daughter was changed by the same fracture. The world hunted her, until she was captured and held for seventeen years by Omnerath, the prime observer, an omniscient being who sees everything, controls nothing, and fears her. Then he offers her freedom, if she joins a team of powered people from other dimensions and stops a creature that is rising. The book is not about her capture. It is about how she learns to live with the darkness inside her, and with the hallucinations. And the creature she is sent to stop is not a stranger.", "cover": "assets/remnants.jpg", "tags": ["Book", "Chapter 1 written"], "people": ["Rhi, the Voidweaver", "Damian Veydris", "Omnerath, the prime observer"], "docs": [{"label": "Read", "title": "Chapter 1", "tldr": "Rhi sits chained in a cell of living light. Captain Damian Veydris comes to collect her, and her shadow has opinions about him.", "items": ["Footsteps echoed through the black, seamless metal alloy that constructed the vast chamber, breaking its eternal silence. The air was stagnant, thick with an artificial chill. A cold precision stripped the air of anything organic. A faint vibration pulsed beneath the surface, the hum of unseen power sources woven into the structure, leaving behind only the rigid weight of control.", "At the chamber’s center stood a solitary cell—its only purpose was to contain. A perfectly equidimensional solid, defying gravity above the floor. The edges were formed by luminous energy filaments, an ever-changing network of pulsating photonic threads flickering between presence and void. Each oscillation sent a faint crackle through the air, the scent of ionized particles sharp against the stillness of the halls. The closer one stood, the more the filaments hummed—a quiet, ceaseless whisper of power waiting to react.", "A hyperdynamic construct, its luminous barriers oscillate between dimensions. The area around it rippled with subtle distortions. An almost imperceptible pressure lingered at the edge of perception. This was no ordinary barrier—it was a living algorithm, a sentient calculation that morphed its very form at every fraction of time, inhibiting any breach before it could begin.", "A pair of chains descended from the topmost plane. They were not of metal nor magic but a force born beyond matter—a decree forged to hold what was presumed to be treacherous. Symbols etched along their length ignited with a spectral, ethereal azure glow. These chains did more than restrain; they bound the very essence, suppressing the unleashed potential of the one they held. All for the singular presence, confined within these extents. Driven to the knees, she breathed, remaining still for eternity—until something shifted. A smirk tugged at the corner of her lips, the first hint of emotion in years, carved deep by the tides of time.", "“Look who finally showed up.” The words trailed off her lips with a hint of bitterness. Her voice was hoarse from the lack of use, but it showed no weakness, rather mockery. Her head lifted deliberately, her bluish-gray eyes with an amber color circling her pupils, which seemed to have lost life from the years of confinement, shifted upwards, an unforgiving, oppressive gaze filled with derision. Her platinum hair with dark roots was disheveled, and the longer side of her asymmetrical hair partially covered her face.", "“You sound too proud to be the one in the chains.” The echoes of the steps stopped. Standing before her was the leader of her capture mission, Damian Veydris.", "“Missed me?” He teased, a wide smirk on his face. He tilted his head back, and the uneven black locks of his side-swept bangs fell away from his sky-blue eyes as they scanned the scene in front of him.", "“I cherish my peace too much for that.” The words rolled off her tongue, stinging with dryness. Her gaze didn’t waver, only growing colder with power. Damian chuckled, lowering his gaze, and shook his head in amusement.", "He let out an exaggerated sigh. “Aww, Rhi. Don’t be so hard on me now. That hurt my poor heart.” He whined, though they both knew that did anything but hurt him.", "“Seems like Omnerath’s chains aren’t doing their job so well.” He let the words sink in, crossing his arms as he observed her face. “You still caused destruction to my precious heart.” He pouted, shaking his head and placing his hand on his “ injured heart.”", "“I’m sure the prime observer couldn’t care less.” A smirk formed on her face, matching the prime observer’s inevitable truth.", "“Besides,” she paused, her gaze growing more intense, looming over him with just her eyes, even though he was the one standing.", "“It’s not like he relates to human emotions much. Unless you count fear and frustration.” She let the words out slowly, making sure every word was laced with mockery. It was not said to Damian, and they both knew that.", "“Speaking of which, he wants to talk with you. Something that you have a hand in.” Damian uncrossed his arms, hooking his thumbs in his pockets as he looked at her. Her smirk grew wider, which only made him smile. He lowered his gaze for a moment; he couldn’t help but grin at the situation he was put through.", "“Now, I did not expect that.” Sarcasm was clear in her tone; she couldn’t help but grin at the irony of this. “Doesn’t this remind you of something?”  She hinted to Damian, which only made him let out a breathy chuckle.", "“You will run out of options one day, and you will have no option but to accept me and ask for my help,” Damian repeated her last words on the day she was locked away. The fact that there was no sustainable option left for the prime observer himself but to lock her away wasn’t something anyone could overlook. He felt the weight of them now; his acknowledgment of how desperate the prime observer was grew by the minute.", "He scoffed at the irony and looked at her. “Well, that was a waste of effort. Never knew that my great plan of catching you would be for nothing after 17 years.” He tilted his head to the side, remembering the days and nights he stayed up trying to figure out how to contain what she was. It was amusing to him; he never thought for a moment that those words she said 17 years ago would still ring in his ears until this moment. He gazed at the woman who was now holding the chains, not literally but in the sense of power.", "She lowered her head. A low, deep chuckle left her throat. “I must say, that was a creative plan.” Her smirk only grew, remembering how she was captured that night. “But you know,” she lifted her head, the intensity of her gaze never shifting, “That now is the old trick in the book.” She stated, making sure that he knew his place. Damian raised his hands in surrender and lowered his head, his smirk never leaving his face. He accepted what she was and the limitless possibilities of her power and mind. Any attempts to go against her wouldn’t do him good, and he knew that too well.", "“Of course, Rhi. Trust me, this was just a mere action of my position as a follower of the great prime observer; I mean no harm.” He played innocent, as he was only a victim of Omnerath’s orders. He knew that the moment she was out of these chains, his existence would be just a thread for her, and she wouldn’t mind cutting it.", "“I have no intention of harming you, Damian.” She knew he feared what she could do, the destruction she could cause in a second, and no one would be able to stop her. “You can save this petite act for a time I might actually consider hurting you.” Her unyielding gaze only made Damian gulp.", "What a way to threaten someone. He thought to himself. After all, it’s been 17 years for her, all alone, and yet she is as calm as ever, calmer than she should be. In addition to that, she knows that she has the upper hand, and she is not holding back on showing the power she holds. Who knows what she could possibly do now, how she would think or react to anything? If she was a mystery that took Damian so long to try and understand for months, then right at this moment, she seemed impossible for him to figure out,  not like he was even willing to try.", "A smirk flickered across his face as he raised two fingers in the air, signaling the control room of the chamber to turn off the cage holding her. The walls of containment slowly vanished into nothing. Damian stood tall and walked to her.", "“This might sting a little.” He pulled out two small circular devices, pressing them against the spots where the chains had held her wrists. He stepped back and looked at her one last time before the Voidweaver was set free. A smug smile appeared on his face as he took a remote out of his pocket.", "“Here goes nothing.” He pressed the button, and the chains broke off her wrists in a subtle explosion. Her arms dropped to her sides. She was free. Yet, she didn’t move. Damian just gazed at her. He thought for a moment that he had hurt her. That’s when she tilted her head back, gazing up at the ceiling. Her eyes were black—an endless void swallowing the light, bottomless and unnatural.", "The air thickened, vibrating with an eerie hum, as if reality itself recoiled from her presence. A sharp chill crawled down Damian’s spine, his skin prickling as if unseen hands dragged over it. The air carried a strange weight, pressing against his chest, making every breath feel like inhaling something dense and suffocating.", "The floor beneath him trembled, cracking like fragile glass under unbearable weight. The very walls warped, shuddering as if struggling to hold themselves together. Damian had to take a step back. His breath hitched as he watched the world unravel. The space around her fractured—glitching slivers of black nothingness, raw and jagged, the destruction wrought by nothing more than her essence being set free.", "As he thought he would get swallowed up by the chaos, it was all gone. His mind couldn’t comprehend it. It was as if nothing had ever happened. She lowered her head; her eyes were back to normal now. A wide grin spread across her face as life surged back into her.", "She stood on her feet, which Damian thought she might have trouble doing. She strode toward him, smirking—radiating life in stark contrast to the hollow figure she had been in those chains. She stood in front of Damian. Unease, rare for him, settled deep in his chest. He knew what power she upholds, what it’s capable of. Yet witnessing it firsthand—the void’s immense distortion opening and vanishing in an instant—unsettled something in him. She snapped her fingers in his face, making him blink, breaking his dazed state.", "“You look like you’ve seen a ghost,” she chuckled softly as he regained his composure, running his fingers through his hair. Her gaze drifted to the chains hanging from the wall. She rubbed her wrists, the tight grip having left its mark. Damian cleared his throat, drawing her gaze back to him.", "“Sure, some are scared of your existence for a reason.” His smugness returned, slipping back into his usual self. She scoffed, curling her fingers a few times, reacquainting herself with movement.", "“Can’t say I blame them.” She gazed back at those chains.", "De-des. o-oy, t-tr.", "Those restraints… they held no purpose now.", "T-tro, y-y, d-des.", "The air around her seemed to thicken—colder, heavier, as if it was holding its breath.", "Destroy.", "She lifted her hand, lifting her index finger. Her hand started glitching as it moved in a diagonal line. As her finger traced the path, the air shimmered with a faint distortion, and black tendrils of energy snaked out, leaving a trail of dark aura that lingered in the space, a deep, oppressive weight hanging in the air like smoke.", "The chains responded, their solid form faltering. A sharp, high-pitched crackling sound rippled from them as they began to glitch, the metallic surface warping, twisting as though reality itself were breaking around them. The air around her shuddered, vibrating with the tension of reality itself, tearing at the edges.", "She raised her middle finger next to the other, and as they slowly spread apart, the air hummed in response—a subtle, almost imperceptible sound like the tightening of a string before it snaps. The glitch in her hand flickered, the once dark aura now swelling, becoming deeper, almost consuming.", "The chains creaked, their strained metallic groans growing louder as they stretched impossibly, as if reality itself were unable to hold them in place any longer. The glitch intensified, twisting the air around them into jagged, glitching fragments. With a violent pull, the chains fractured, their pieces suspended in the air, defying the laws that once held them together.", "Her hand opened for just a moment, and the black aura spread, wrapping itself around her fingers like a living thing. The remnants of the chains floated with her hand motion as she clenched her fist. The fragments rushed toward each other, colliding with a soft, hollow thud that reverberated through the room; the sound of the chains clashing, resisting, echoed through the room. The force of their union screamed in protest, as though their very being was fighting against their inevitable destruction. The distortion intensified further as they repelled against each other, breaking even further.", "Her face twisted into a proud smirk, her eyes now pools of inky blackness as her body began to lift off the floor, the gravity around her seemingly abandoning her. Her shadow curled up, dark and alive, wrapping itself around her form, as if it sought to hide from the chaos she was about to unleash.", "Damian’s breath hitched in his throat, a shiver running down his spine as he instinctively activated his shield. The dome-like shield flared to life with a low, resonant hum, trapping him in thick, suffocating air—like even the barrier could sense the devastation about to unfold.", "And then—it happened. No explosion. No fire. No chaos. There was only a profound, suffocating silence. A stillness so complete it felt like the world itself had paused. The explosion of force rippled through the room without a sound, the very fabric of reality itself stretching and snapping like a rubber band. Not a second passed before the chains were pulled back together by a deep, resonant sound that could only be described as a reversed expulsion, like the undoing of an action, a tearing at the edges of time itself.", "The shattered chains vanished into the black void at the room’s center—so dark, it devoured all color, a hole in existence itself. The darkness expanded with terrifying speed, an overwhelming force that shattered the remaining fragments of her imprisonment. Every inch of the room. The walls seemed to collapse inward as if the space itself could no longer contain the rupture of her power. The void expanded, pulling everything into it.", "Then, with an unnatural shudder, it collapsed inward. Folding over itself, devouring its own edges, until—", "Silence.", "Absolute. Unbroken. As if the very air had been erased, leaving behind only an unsettling, untouched emptiness.", "She settled back onto the floor as her shadow unraveled from around her, slithering back into place. It rubbed its hands together, a silent gesture of anticipation—as if it had been waiting for this all along. She scoffed at her own shadow before shifting her gaze to Damian, watching as he powered down his shield.", "“My, My. Do warnings not exist in your reality, Ms Voidweaver?” he crossed his arms and looked at her shadow, who instantly looked the other way, showing its dislike of him.", "“It’s not like you came here unprepared, Captain Veydris.” She gave him a slow once-over, making it clear he was untouched—just as she expected. She gazed at her shadow, who was now poking her tongue out at Damian. “Shall we?” She gazed back at him; her authoritative gaze was back, piercing through his existence. Damian’s grin returned. With an exaggerated sweep of his arm, he gestured toward the exit.", "“Ladies, first.”"]}]}, {"title": "Liminal", "tagline": "Not just research, but changing humanity from its core.", "premise": "Two scientists discover Aethyra, the element between the soul and matter. One takes the credit, the other loses his name, and an institute is built on the secret. The story follows Lioran, the founder’s son, who now runs it.", "cover": "assets/liminal.jpg", "people": ["Lioran Ashvale", "Varen Holt", "Alaric Ashvale", "Orien Kael"], "docs": [{"label": "World", "title": "The Aethyra Research Institute", "tldr": "An institute built to study Aethyra, the element between soul and matter, split into five divisions.", "items": [{"h": "What it is"}, "The Aethyra Research Institute (A.R.I.). Not just research, but changing humanity from its core.", "Founded by Dr. Alaric Ashvale. Current director: Dr. Lioran Ashvale.", "After the discovery of Aethyra, A.R.I. was established to:", "1. Study Aethyra’s biological nature, which was discovered as the element between the soul and matter.", "2. Explore applications in medicine, energy stabilization, and “dimensional biology.”", "3. Develop technology that interacts safely with Aethyric fields, for healing, communication, and theoretical transport.", {"h": "Five divisions"}, "A.R.I. is divided into five core divisions, mirroring the five known “Essences” of Aethyric interaction.", "BioDimensional Chemistry (BDC): studies the biochemical behavior of Aethyra in living systems. The first division founded by Dr. Alaric Ashvale. It began as a small lab focused on transdimensional biochemical anomalies, which led to the discovery of Aethyra. After the breakthrough, it grew into a full division of the new institute and became its heart. Head director: Dr. Varen Holt, the first and current director.", "Quantum Aethyric Engineering (QAE): manipulates Aethyra for energy and material synthesis.", "PsychoReactive Studies (PRS): explores Aethyra’s link with emotion, thought, and consciousness.", "Material Integration & Containment (MIC): designs equipment that stabilizes Aethyra exposure, like containment fields, scanners, and resonance suits.", "Theoretical & Historical Research (THR): focuses on philosophical, mathematical, and ancient references to Aethyra, the “soul sciences.”", {"h": "Who runs it"}, "Director: Dr. Lioran Ashvale.", "Executive board: 7 to 9 people. Funders, businessmen, government observers, and a PR who is the face of the board, trying to win people over rather than having them idolize Lioran.", "The chairman: Orien Kael. A cold, calculated person who treats the whole institute as a chessboard. He doesn’t care who is where as long as it’s still running.", "Four private funders. One government observer.", "PR: Renard."]}], "tags": ["Book"]}];
+const LINES={
+  N1:'Some things are better opened than explained.',
+  N2:'Meet the one who keeps this place. Evangeline.',
+  E1:'Oh, good. Someone finally opened the book.',
+  E2:"I'm Evangeline. Eva's easier. Wander, or follow me.",
+  Cfront:'Front page. Facts first, then the fun.',
+  Choia:'Careful in here. This forest has opinions.',
+  Cgilded:"Pretty, isn't it? It never got to open.",
+  Ccard:'Pick a card. Any card.',
+  Cbroadcast:'This is my studio. Pick a take and press play.',
+  Cc1:'Big ideas get their own pages.',
+  Cc2:'Another one. Also big.',
+  Climinal:'This one is called Liminal.',
+  Crocky:'This one is for Rockie.',
+  Cworkshop:'My desk. Less magic, more machinery.',
+  Cclose:"That's the whole book. I only keep the pages. If you want to meet the one behind the magic, look for the glowing sigil."
+};
+const PAGES=[
+  {id:'front',ch:1,acc:'#e0116f'},{id:'hoia',ch:2,tab:'Hoia Baciu',acc:'#b3261e'},{id:'gilded',ch:2,tab:'Gilded Cage',acc:'#e2b13c'},{id:'card',ch:2,tab:'The lore commission',acc:'#0b6a58'},
+  {id:'broadcast',ch:3,acc:'#3b5a99'},
+  {id:'c2',ch:4,tab:'Remnants',acc:'#14b8c4'},{id:'liminal',ch:4,tab:'Liminal',acc:'#d0d0d0'},{id:'c1',ch:4,tab:'Concept I',acc:'#ff5fa2'},{id:'rocky',ch:4,tab:'For Rockie',acc:'#e8913a'},
+  {id:'workshop',ch:5,acc:'#b8751a'},{id:'close',ch:6,acc:'#1a1740'}
+];
+const TONE={front:196,hoia:98,gilded:164.8,card:174.6,broadcast:110,c1:220,c2:98,liminal:174.6,rocky:261.6,workshop:130.8,close:196};
+const FXC={
+  front:{n:46,col:['#e0116f','#2f6bff','#8fd400','#ffc83d'],shape:'dot',vy:-.3,r:[2,6],a:.5},
+  hoia:{n:70,col:['#ff6a3d','#e0584a','#ffb347'],shape:'dot',vy:-.55,r:[1,3],a:.85,flick:true},
+  gilded:{n:80,col:['#f6dc8a','#e2b13c'],shape:'dot',vy:-.14,r:[1,3],a:.75},
+  card:{n:20,col:['#ffffff'],shape:'suit',vy:-.18,r:[16,30],a:.12},
+  c1:{n:50,col:['#ff5fa2','#8a5cff','#ffffff'],shape:'dot',vy:-.22,r:[2,7],a:.5},
+  c2:{n:36,col:['#3b2a7a','#1a1038','#6d4fd6'],shape:'dot',vy:-.08,r:[5,16],a:.22},
+  liminal:{n:34,col:['#8a8a8a','#d0d0d0','#505050'],shape:'dot',vy:-.1,r:[1,4],a:.3},
+  rocky:{n:34,col:['#e8913a','#ffc87a','#ffffff'],shape:'star',vy:-.18,r:[5,11],a:.7},
+  close:null
+};
+const VINE='<svg viewBox="0 0 400 600" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path class="vp" d="M20 600C40 490 140 480 105 385S30 270 140 205 270 120 225 20"/><path class="vp" d="M105 385C165 365 195 335 238 345"/><path class="vp" d="M140 205C92 195 70 152 92 108"/><path class="vp" d="M225 20C260 40 300 36 330 8"/><path class="vp" d="M30 270C70 280 96 270 120 250"/><rect x="236" y="338" width="22" height="14" rx="3"/><rect x="80" y="94" width="22" height="14" rx="3"/><rect x="326" y="0" width="22" height="14" rx="3"/><rect x="116" y="244" width="22" height="14" rx="3"/><circle class="vd" cx="247" cy="345" r="2.8" fill="currentColor" stroke="none"/><circle class="vd" cx="91" cy="101" r="2.8" fill="currentColor" stroke="none"/><circle class="vd" cx="337" cy="7" r="2.8" fill="currentColor" stroke="none"/><circle class="vd" cx="127" cy="251" r="2.8" fill="currentColor" stroke="none"/><path d="M118 430c14-16 34-20 46-14-8 16-28 24-46 14z" fill="currentColor" fill-opacity=".25" stroke="none"/><path d="M62 330c-18-12-22-34-14-46 18 6 28 26 14 46z" fill="currentColor" fill-opacity=".25" stroke="none"/><path d="M190 160c18-8 40-4 48 8-18 10-38 6-48-8z" fill="currentColor" fill-opacity=".25" stroke="none"/></svg>';
+
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PENT=[261.63,293.66,329.63,392,440,523.25,587.33,659.25,784];
+
+/* ============ AUDIO (synthesized: every world has its own sound scene) ============ */
+const AU={ctx:null,master:null,noise:null,on:false};
+function auInit(){
+  if(AU.ctx) return AU.ctx;
+  const C=window.AudioContext||window.webkitAudioContext; if(!C) return null;
+  try{
+    const c=new C(); AU.ctx=c;
+    AU.master=c.createGain(); AU.master.gain.value=0; AU.master.connect(c.destination);
+    const n=c.createBuffer(1,c.sampleRate,c.sampleRate), d=n.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    AU.noise=n;
+  }catch(e){AU.ctx=null}
+  return AU.ctx;
+}
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function T(S,f,o){
+  const c=AU.ctx; if(!c||!AU.on) return; o=o||{};
+  const t=c.currentTime+(o.delay||0), dur=o.dur||1, v=o.vol||.05;
+  const osc=c.createOscillator(); osc.type=o.type||'sine'; osc.frequency.setValueAtTime(f,t);
+  if(o.vib){ const l=c.createOscillator(); l.frequency.value=4.6+Math.random(); const lg=c.createGain(); lg.gain.value=10; l.connect(lg); lg.connect(osc.detune); l.start(t); l.stop(t+dur+.05); }
+  if(o.end) osc.frequency.exponentialRampToValueAtTime(o.end,t+dur);
+  const g=c.createGain(); g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(v,t+(o.att||.01)); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  if(o.lp){ const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=o.lp; osc.connect(lp); lp.connect(g); } else osc.connect(g);
+  g.connect(S&&S.bus?S.bus:AU.master); osc.start(t); osc.stop(t+dur+.05);
+}
+function N(S,o){
+  const c=AU.ctx; if(!c||!AU.on||!AU.noise) return; o=o||{};
+  const t=c.currentTime+(o.delay||0), dur=Math.min(o.dur||.1,.85);
+  const s=c.createBufferSource(); s.buffer=AU.noise;
+  const f=c.createBiquadFilter(); f.type=o.type||'bandpass'; f.Q.value=o.q||1;
+  f.frequency.setValueAtTime(o.f||1500,t); if(o.f2) f.frequency.exponentialRampToValueAtTime(o.f2,t+dur);
+  const g=c.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(o.vol||.1,t+(o.att||.005)); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  s.connect(f); f.connect(g); g.connect(S&&S.bus?S.bus:AU.master); s.start(t,Math.random()*.1,dur+.05);
+}
+function every(S,ms,fn,jit){ (function loop(){ setTimeout(()=>{ if(S.dead) return; if(AU.on&&booted) fn(); loop(); },ms+Math.random()*(jit||0)); })(); }
+function drone(S,freqs,type,vol,lp){
+  const c=AU.ctx, f=c.createBiquadFilter(); f.type='lowpass'; f.frequency.value=lp||800; f.connect(S.bus);
+  freqs.forEach((fr,i)=>{ const o=c.createOscillator(); o.type=type; o.frequency.value=fr; o.detune.value=(i%2?5:-5); const g=c.createGain(); g.gain.value=vol; o.connect(g); g.connect(f); o.start(); S.nodes.push(o); });
+}
+function bed(S,type,freq,vol,lfoHz,depth){
+  const c=AU.ctx, s=c.createBufferSource(); s.buffer=AU.noise; s.loop=true;
+  const f=c.createBiquadFilter(); f.type=type; f.frequency.value=freq; f.Q.value=.7;
+  const g=c.createGain(); g.gain.value=vol; s.connect(f); f.connect(g); g.connect(S.bus); s.start(); S.nodes.push(s);
+  if(lfoHz){ const l=c.createOscillator(); l.frequency.value=lfoHz; const lg=c.createGain(); lg.gain.value=depth||freq*.5; l.connect(lg); lg.connect(f.frequency); l.start(); S.nodes.push(l); }
+}
+const bell=(S,f,v,d)=>{ T(S,f,{vol:v,dur:d||1.6}); T(S,f*2,{vol:v*.3,dur:(d||1.6)*.6}); };
+let scene=null;
+function sceneStart(w){
+  sceneStop(); if(!AU.on||!AU.ctx||!SC[w]) return;
+  const c=AU.ctx, bus=c.createGain(); bus.gain.value=0; bus.connect(AU.master); bus.gain.setTargetAtTime(1,c.currentTime,.5);
+  const S={bus,nodes:[],dead:false}; scene=S; SC[w](S);
+}
+function sceneStop(){
+  if(!scene) return; const S=scene; scene=null; S.dead=true;
+  try{ S.bus.gain.setTargetAtTime(0,AU.ctx.currentTime,.2); }catch(e){}
+  setTimeout(()=>{ S.nodes.forEach(n=>{try{n.stop()}catch(e){}}); try{S.bus.disconnect()}catch(e){} },1400);
+}
+const SC={
+  front(S){ drone(S,[196,293.7],'triangle',.018,700); every(S,2400,()=>bell(S,pick(PENT)*2,.04,1.8),1600); },
+  hoia(S){
+    drone(S,[55,58.27,77.78],'sawtooth',.02,220);
+    drone(S,[311.1,329.6,466.2],'sine',.004,2200);
+    drone(S,[3150],'sine',.0012,6000);
+    bed(S,'bandpass',700,.05,.27,260);
+    every(S,2900,()=>{ T(S,62,{vol:.32,dur:.4,end:34}); T(S,58,{vol:.2,dur:.4,end:32,delay:.24}); if(Math.random()<.3) T(S,60,{vol:.18,dur:.35,end:33,delay:.6}); },1800);
+    every(S,110,()=>{ if(Math.random()<.55) N(S,{type:'highpass',f:2000+Math.random()*4000,vol:.04+.06*Math.random(),dur:.02+Math.random()*.03}); },170);
+    every(S,6500,()=>{ const f=pick([180,220,260]); T(S,f,{type:'sawtooth',vol:.045,dur:2.6,att:2.2,end:f*1.5,lp:900}); },4000);
+    every(S,9000,()=>T(S,pick([90,120]),{type:'sawtooth',vol:.04,dur:1.5,end:pick([160,70]),lp:420}),6000);
+    every(S,12000,()=>N(S,{f:3200,f2:900,q:8,vol:.07,dur:.8,att:.1}),6000);
+    every(S,13000,()=>{ N(S,{type:'bandpass',f:500,q:2,vol:.12,dur:.85,att:.5}); N(S,{type:'bandpass',f:380,q:2,vol:.1,dur:.85,att:.4,delay:1}); },8000);
+    every(S,17000,()=>{ T(S,740,{vol:.03,dur:2,end:700}); T(S,784,{vol:.03,dur:2,end:742}); },9000);
+  },
+  gilded(S){
+    let st=0, ch=0; const chords=[[146.8,174.6,220],[116.5,146.8,174.6],[174.6,220,261.6],[130.8,164.8,196]];
+    drone(S,[36.7,73.4],'sawtooth',.012,260);
+    every(S,3200,()=>{ chords[ch++%4].forEach((f,i)=>{ T(S,f,{type:'sawtooth',vol:.018,dur:4.4,att:1.4,lp:900,vib:1}); T(S,f*2,{type:'sawtooth',vol:.008,dur:4.4,att:1.8,lp:1100,vib:1}); }); T(S,[220,261.6,329.6,293.7][(ch+3)%4]*1,{type:'sawtooth',vol:.012,dur:3.4,att:1.2,lp:700,vib:1,delay:.4}); },0);
+    every(S,800,()=>{ const k=st++%8;
+      if(k===0||k===4){ T(S,70,{vol:.34,dur:.8,end:38}); N(S,{type:'lowpass',f:300,vol:.12,dur:.3}); }
+      else if(k===2||k===6){ T(S,110,{vol:.1,dur:.4,end:70}); }
+      else if(k===7&&Math.random()<.5){ T(S,105,{vol:.07,dur:.3,end:70}); T(S,95,{vol:.07,dur:.3,end:62,delay:.18}); }
+    },0);
+    every(S,12000,()=>{ T(S,196,{type:'sawtooth',vol:.04,dur:3,att:1.6,lp:800,vib:1}); T(S,294,{type:'sawtooth',vol:.03,dur:3,att:1.8,lp:800,vib:1}); },5000);
+    every(S,15000,()=>{ T(S,1760,{vol:.025,dur:1.8}); T(S,2400,{vol:.012,dur:1.2}); },8000);
+  },
+  card(S){
+    let i=0; const bass=[98,98,123.5,110,98,110,147,123.5];
+    every(S,420,()=>{ const k=i++%8; T(S,bass[k],{type:'triangle',vol:.12,dur:.38,lp:600}); if(k%2) N(S,{type:'highpass',f:7000,vol:.04,dur:.04}); if(k===3||k===7) N(S,{type:'highpass',f:3000,vol:.12,dur:.06}); },0);
+    every(S,5200,()=>[0,.09,.18].forEach(d=>N(S,{type:'highpass',f:3500,vol:.1,dur:.04,delay:d})),2500);
+  },
+  broadcast(S){
+    drone(S,[60,120],'sine',.02,300); bed(S,'lowpass',260,.05);
+    every(S,6000,()=>N(S,{f:1800,q:4,vol:.1,dur:.03}),5000);
+    every(S,16000,()=>T(S,1000,{vol:.015,dur:.12}),9000);
+  },
+  c1(S){
+    drone(S,[261.6,392],'sine',.012,900);
+    every(S,2000,()=>{ const b=Math.floor(Math.random()*5); [0,1,2,3].forEach(k=>T(S,PENT[(b+k*2)%9]*2,{type:'triangle',vol:.03,dur:1.8,delay:k*.15})); },1400);
+  },
+  c2(S){
+    drone(S,[55,82.4],'sine',.05,240);
+    drone(S,[110,116.5],'sawtooth',.005,280);
+    bed(S,'lowpass',220,.05,.08,120);
+    every(S,6500,()=>{ const f=pick([98,82.4,73.4]); T(S,f,{type:'sine',vol:.05,dur:4.5,att:1.8,end:f*.96,lp:300}); },3500);
+    every(S,9000,()=>{ N(S,{type:'bandpass',f:700,f2:260,q:3,vol:.035,dur:.8,att:.4}); },5000);
+  },
+  liminal(S){
+    drone(S,[120,180],'sine',.03,500); drone(S,[120,240],'sawtooth',.004,500);
+    every(S,5000,()=>{ const f=pick([523,659,784]); [0,.55,1.1,1.7].forEach((d,k)=>T(S,f,{vol:.04/(k+1),dur:2.5,delay:d,att:.1})); },4000);
+  },
+  rocky(S){
+    let m=0; const mel=[330,440,392,330,349,330,294,262,294,330,349,392,330,294,262,220];
+    const chords=[[220,262,330],[175,220,262],[262,330,392],[196,247,294]];
+    bed(S,'lowpass',380,.02,.07,120);
+    every(S,1650,()=>{ const k=m++; const f=mel[k%mel.length];
+      T(S,f,{vol:.06,dur:3,att:.12,vib:1}); T(S,f/2,{type:'triangle',vol:.02,dur:3,att:.15});
+      if(k%4===0) chords[(k/4)%4].forEach((c,i)=>T(S,c/2,{type:'triangle',vol:.022,dur:6.4,att:.6,delay:i*.05}));
+    },0);
+  },
+  workshop(S){
+    drone(S,[55,110],'square',.012,200);
+    every(S,300,()=>{ if(Math.random()<.7) N(S,{type:'highpass',f:2800,vol:.07,dur:.02}); },200);
+    every(S,5500,()=>T(S,180,{type:'sawtooth',vol:.02,dur:.9,end:620,lp:900}),3500);
+    every(S,7000,()=>{ T(S,170,{type:'square',vol:.03,dur:.12,end:80}); N(S,{f:900,q:2,vol:.08,dur:.1}); },4000);
+  },
+  close(S){ drone(S,[196,247,294,392],'triangle',.014,900); every(S,2800,()=>bell(S,pick([784,988,1175,1568]),.04,2.2),1800); }
+};
+function setSound(on){
+  AU.on=on;
+  if(on){ auInit(); if(AU.ctx){ try{AU.ctx.resume()}catch(e){} AU.master.gain.setTargetAtTime(0.9,AU.ctx.currentTime,0.05); if(booted) sceneStart(cur); } }
+  else if(AU.ctx){ AU.master.gain.setTargetAtTime(0,AU.ctx.currentTime,0.05); sceneStop(); }
+  if(voiceEl) voiceEl.muted=!on;
+  const b=$('#muteBtn'); b.textContent=on?'SOUND ON':'SOUND OFF'; b.setAttribute('aria-pressed',on?'true':'false');
+}
+function tickSnd(){ T(null,pick(PENT)*2,{vol:.02,dur:.22}); }
+function portalSnd(){
+  N(null,{type:'bandpass',f:500,f2:1600,q:.6,vol:.05,dur:.8,att:.4});
+  T(null,659.25,{vol:.05,dur:2.2,att:.05,delay:.45}); T(null,329.6,{vol:.04,dur:2.4,delay:.5});
+}
+function bloomSnd(){ [523.25,659.25,783.99,1046.5].forEach((f,i)=>T(null,f,{vol:.09,dur:2.2,delay:i*.11})); }
+function flipSnd(){ N(null,{type:'highpass',f:3500,vol:.18,dur:.05}); N(null,{type:'highpass',f:2500,vol:.1,dur:.06,delay:.07}); }
+function boxSnd(){ T(null,110,{vol:.25,dur:.3,end:60}); T(null,200,{type:'sawtooth',vol:.03,dur:.7,end:320,lp:500,delay:.1}); [0,1,2].forEach(k=>T(null,PENT[4+k*2],{vol:.06,dur:1.4,delay:.4+k*.12})); }
+function studioSw(){ N(null,{f:700,f2:2200,q:1,vol:.08,dur:.25,att:.05}); T(null,1500,{type:'square',vol:.04,dur:.02}); T(null,700,{type:'square',vol:.03,dur:.03,delay:.04}); }
+function revealSnd(){ [392,523,659,784,1047].forEach((f,i)=>T(null,f,{vol:.07,dur:2.6,delay:i*.14})); N(null,{type:'bandpass',f:600,f2:6000,vol:.1,dur:.8,att:.3}); }
+function glitchSnd(){ for(let i=0;i<5;i++) T(null,pick([900,1400,2200,3100]),{type:'square',vol:.02,dur:.04,delay:i*.05}); }
+
+/* ============ SLOTS, REDACTIONS, CONCEPTS ============ */
+function fillSlots(){
+  $$('[data-slot]').forEach(el=>{
+    const src=MEDIA[el.dataset.slot], t=el.dataset.type;
+    el.innerHTML='';
+    if(src&&t==='link'){ const a=document.createElement('a'); a.className='btn'; a.href=src; a.target='_blank'; a.rel='noopener'; a.textContent=el.dataset.btn||'Open'; a.style.display='inline-block'; el.classList.remove('slot'); el.appendChild(a); }
+    else if(src){
+      el.classList.add('loaded');
+      const m=document.createElement(t==='audio'?'audio':t==='video'?'video':'img');
+      if(t==='audio'||t==='video'){m.controls=true;m.preload='metadata'}
+      if(t==='img') m.alt=el.dataset.label||'';
+      m.src=src; el.appendChild(m);
+    }else{
+      const a=document.createElement('span'); a.className='ph-tag'; a.textContent=el.dataset.state||'FILE NOT LOADED';
+      const b=document.createElement('span'); b.className='ph-lab'; b.textContent=el.dataset.label||'';
+      el.appendChild(a); el.appendChild(b);
+    }
+  });
+  $$('.redact').forEach(el=>{
+    const n=+el.dataset.n||5, w=[96,88,92,70,84,60,90,76]; let h='';
+    for(let i=0;i<n;i++) h+='<i style="width:'+w[i%w.length]+'%"></i>';
+    el.innerHTML=h;
+    const sp=document.createElement('span'), bx=document.createElement('b'); bx.textContent='CLEARANCE PENDING'; sp.appendChild(bx); el.appendChild(sp);
+    const sm=document.createElement('small'); sm.textContent=el.dataset.label+' / shown once the team approves'; el.appendChild(sm);
+  });
+  $$('.cp').forEach(pg=>{
+    const c=CONCEPTS[+pg.dataset.concept], cover=pg.querySelector('.cp-cover'), txt=pg.querySelector('.cp-text'), roman=['I','II','III'][+pg.dataset.concept];
+    if(c.cover){ const im=document.createElement('img'); im.src=c.cover; im.alt='Cover of '+(c.title||'book concept '+roman); cover.appendChild(im); }
+    else { cover.innerHTML='<span class="num">'+roman+'</span><small>Cover not made yet</small>'; }
+    txt.innerHTML='';
+    const h=document.createElement('h1'); h.textContent=c.title||'Title not chosen yet'; if(!c.title) h.className='tbd'; txt.appendChild(h);
+    if(c.tagline){ const t=document.createElement('p'); t.className='tag2'; t.textContent=c.tagline; txt.appendChild(t); }
+    const p=document.createElement('p'); p.textContent=c.premise||'The premise is still being written down.'; if(!c.premise) p.className='tbd'; txt.appendChild(p);
+    const pills=document.createElement('div'); (c.tags||['Book']).forEach(t=>{ const sp=document.createElement('span'); sp.className='pill'; sp.textContent=t; pills.appendChild(sp); }); txt.appendChild(pills);
+    if(c.people){ const pe=document.createElement('p'); pe.style.margin='18px 0 6px'; pe.className='kicker'; pe.textContent='People in the story'; txt.appendChild(pe); const pw=document.createElement('div'); c.people.forEach(n=>{ const sp=document.createElement('span'); sp.className='pill'; sp.textContent=n; pw.appendChild(sp); }); txt.appendChild(pw); }
+    (c.docs||[]).forEach(d=>{ const det=document.createElement('details'); det.className='doc'; det.style.marginTop='16px'; const sm=document.createElement('summary'); const a=document.createElement('span'); a.textContent=d.label; const b=document.createElement('b'); b.textContent=d.title; sm.appendChild(a); sm.appendChild(b); det.appendChild(sm); const body=document.createElement('div'); body.className='docbody'; if(d.tldr){ const tp=document.createElement('p'); tp.className='tldr'; tp.innerHTML='<b>In one line.</b> '; tp.appendChild(document.createTextNode(d.tldr)); body.appendChild(tp); } d.items.forEach(it=>{ const n=document.createElement(typeof it==='string'?'p':'h3'); n.textContent=typeof it==='string'?it:it.h; body.appendChild(n); }); det.appendChild(body); txt.appendChild(det); });
+  });
+  if(MEDIA.creatorPhoto){ const d=document.createElement('div'); d.className='portrait'; const im=document.createElement('img'); im.src=MEDIA.creatorPhoto; im.alt='Malak Ibrahim'; d.appendChild(im); $('#creatorPhoto').appendChild(d); }
+  const ap=$('#arcPanel'); ap.innerHTML='';
+  const ah=document.createElement('h2'); ah.textContent=ARC.title||'The arc, in full'; ap.appendChild(ah);
+  if(ARC.sub){ const sp=document.createElement('p'); sp.className='arc-sub'; sp.textContent=ARC.sub; ap.appendChild(sp); }
+  { const t=document.createElement('p'); t.className='tldr'; t.innerHTML='<b>In one line.</b> '; t.appendChild(document.createTextNode('Humans were prey. A queen bargained for peace, and the price was a child who could command the monsters.')); ap.appendChild(t); }
+  const sc=document.createElement('div'); sc.className='arc-scroll'; ap.appendChild(sc);
+  (ARC.paras&&ARC.paras.length?ARC.paras:['The written arc is being added.']).forEach(t=>{ const p=document.createElement('p'); p.textContent=t; sc.appendChild(p); });
+  const renderDoc=(el,items)=>{ items.forEach(it=>{ const n=document.createElement(typeof it==='string'?'p':'h3'); n.textContent=typeof it==='string'?it:it.h; el.appendChild(n); }); };
+  renderDoc($('#docWall .docbody'),DOCS.wall); renderDoc($('#docVye .docbody'),DOCS.vye);
+  [['#docWall .docbody',"A wall of living water, built from a father's mind, that remembers a whole community and reacts to what people feel."],['#docVye .docbody',"A sixteen-year-old who has never had to choose, until one choice decides the fate of his world."]].forEach(a=>{ const b=$(a[0]); const t=document.createElement('p'); t.className='tldr'; t.innerHTML='<b>In one line.</b> '; t.appendChild(document.createTextNode(a[1])); b.insertBefore(t,b.firstChild); });
+  $$('.vine').forEach(v=>{ v.innerHTML=VINE; });
+  $('#cvine').innerHTML=VINE;
+  /* sub tabs for chapters with several pages */
+  [2,4].forEach(ch=>{
+    const ids=PAGES.filter(p=>p.ch===ch).map(p=>p.id);
+    ids.forEach(id=>{
+      const box=document.createElement('div'); box.className='subtabs';
+      ids.forEach(j=>{ const b=document.createElement('button'); b.type='button'; b.dataset.go=j; b.textContent=PAGES.find(p=>p.id===j).tab; if(j===id) b.setAttribute('aria-current','true'); box.appendChild(b); });
+      $('#pg-'+id+' .in').prepend(box);
+    });
+  });
+}
+
+/* ============ CAPTIONS / VOICE ============ */
+let run=0, voiceEl=null, hideT=null, booted=false, opening=false;
+function stopVoice(){ if(voiceEl){ try{voiceEl.pause()}catch(e){} voiceEl=null; } }
+async function say(who,id,tok){
+  const text=LINES[id]; if(!text) return false;
+  const cap=$('#cap'); clearTimeout(hideT);
+  cap.dataset.who=who;
+  $('#who').textContent=who==='e'?'EVA':'NARRATOR';
+  const face=$('#face');
+  if(who==='e'&&MEDIA.evaImage){ face.innerHTML=''; const im=document.createElement('img'); im.src=MEDIA.evaImage; im.alt=''; face.appendChild(im); }
+  else face.textContent=who==='e'?'E':'◌';
+  cap.classList.add('show');
+  const line=$('#line'); line.textContent='';
+  let ended=null; stopVoice();
+  const src=MEDIA.voice&&MEDIA.voice[id];
+  if(src){ const a=new Audio(src); a.muted=!AU.on; voiceEl=a; ended=new Promise(r=>{a.onended=r;a.onerror=r}); a.play().catch(()=>{}); }
+  const per=reduce?0:(who==='n'?Math.max(50,Math.min(85,5200/text.length)):Math.max(38,Math.min(62,3800/text.length)));
+  for(let i=1;i<=text.length;i++){
+    if(tok!==run) return false;
+    line.textContent=text.slice(0,i);
+    if(i%3===0&&text[i-1]!==' ') tickSnd();
+    if(per) await sleep(per);
+  }
+  if(ended) await Promise.race([ended,sleep(25000)]); else await sleep(reduce?2000:(who==='n'?1500:1100));
+  return tok===run;
+}
+function hideCapSoon(tok,ms){ clearTimeout(hideT); hideT=setTimeout(()=>{ if(tok===run) $('#cap').classList.remove('show'); },ms||3400); }
+
+/* ============ FX PARTICLES ============ */
+const fx=$('#fx'), fxc=fx.getContext('2d'); let parts=[], fxcfg=null; const SUITS=['♠','♥','♦','♣'];
+function fxSize(){ const w=$('#world'); fx.width=w.clientWidth; fx.height=w.clientHeight; }
+function mk(init){ const c=fxcfg; return {x:Math.random()*fx.width,y:init?Math.random()*fx.height:fx.height+20,r:c.r[0]+Math.random()*(c.r[1]-c.r[0]),vy:c.vy*(0.6+Math.random()*.8),ph:Math.random()*6.28,col:c.col[Math.floor(Math.random()*c.col.length)],s:SUITS[Math.floor(Math.random()*4)]}; }
+function fxSet(w){ fxcfg=FXC[w]||null; parts=[]; if(!fxcfg){ fxc.clearRect(0,0,fx.width,fx.height); return; } fxSize(); for(let i=0;i<fxcfg.n;i++) parts.push(mk(true)); }
+function star(x,y,r){ fxc.beginPath(); fxc.moveTo(x,y-r); fxc.quadraticCurveTo(x,y,x+r,y); fxc.quadraticCurveTo(x,y,x,y+r); fxc.quadraticCurveTo(x,y,x-r,y); fxc.quadraticCurveTo(x,y,x,y-r); fxc.fill(); }
+function drawFx(t){
+  fxc.clearRect(0,0,fx.width,fx.height); if(!fxcfg) return;
+  for(let i=0;i<parts.length;i++){
+    const p=parts[i]; if(!reduce) p.y+=p.vy; if(p.y<-34) parts[i]=mk(false);
+    const x=p.x+Math.sin(t*.0006+p.ph)*14; let a=fxcfg.a; if(fxcfg.flick) a*=0.6+0.4*Math.sin(t*.01+p.ph);
+    fxc.globalAlpha=Math.max(0,a); fxc.fillStyle=p.col;
+    if(fxcfg.shape==='dot'){ fxc.beginPath(); fxc.arc(x,p.y,p.r,0,6.283); fxc.fill(); }
+    else if(fxcfg.shape==='star') star(x,p.y,p.r);
+    else { fxc.font=p.r+'px serif'; fxc.fillText(p.s,x,p.y); }
+  }
+  fxc.globalAlpha=1;
+}
+
+/* ============ CRT (studio monitor) ============ */
+const crt=$('#crt'), cx=crt.getContext('2d');
+let crtBoost=1, chan=1, cur='front', frame=0; const vu=new Array(10).fill(0);
+let mediaPlaying=false;
+function drawCrt(t){
+  const W=160,H=90, sig=mediaPlaying;
+  cx.fillStyle='#02060d'; cx.fillRect(0,0,W,H);
+  cx.fillStyle='rgba(158,197,255,.09)';
+  for(let x=0;x<W;x+=16) cx.fillRect(x,0,1,H);
+  for(let y=0;y<H;y+=15) cx.fillRect(0,y,W,1);
+  const amp=(sig?20:1.6)*(0.5+Math.min(1,crtBoost)*0.8);
+  cx.fillStyle='#9ec5ff';
+  for(let x=0;x<128;x++){
+    const y=45+Math.sin(x*.16+t*.006)*amp*Math.sin(x*.045+t*.0015)+(Math.random()-.5)*(sig?3:.8);
+    cx.fillRect(x,Math.round(y),1,2);
+  }
+  for(let i=0;i<vu.length;i++){
+    const target=sig?(.25+Math.random()*.7):.04; vu[i]+=(target-vu[i])*.25;
+    const h=Math.round(vu[i]*70);
+    for(let k=0;k<h;k+=3){ cx.fillStyle=k>52?'#ff6a6a':(k>38?'#ffd23f':'#9ec5ff'); cx.fillRect((134+i*2.4)|0,84-k,2,2); }
+  }
+  crtBoost*=.95;
+}
+function duck(on){ if(AU.ctx) AU.master.gain.setTargetAtTime(on?0.08:(AU.on?0.9:0),AU.ctx.currentTime,.1); }
+function mediaState(e,on){
+  if(!(e.target instanceof HTMLMediaElement)) return;
+  mediaPlaying=on; duck(on);
+  const o=$('#osd2'); if(o) o.textContent=on?'PLAYING':'STANDBY';
+  const a=$('#onair'); if(a) a.classList.toggle('on',on);
+}
+['play','playing'].forEach(ev=>document.addEventListener(ev,e=>mediaState(e,true),true));
+['pause','ended'].forEach(ev=>document.addEventListener(ev,e=>mediaState(e,false),true));
+function renderStudio(){
+  const k=$('#knobs');
+  TRACKS.forEach(tr=>{ const b=document.createElement('button'); b.className='knob'; b.type='button'; b.dataset.chan=tr.n; b.setAttribute('aria-pressed',tr.n===1?'true':'false'); b.setAttribute('aria-label','Take '+tr.n+', '+tr.title); b.textContent=tr.n; k.appendChild(b); });
+}
+function setChan(n){
+  const tr=TRACKS[n-1]; if(!tr) return; chan=n; crtBoost=1;
+  $$('.knob').forEach(k=>k.setAttribute('aria-pressed',(+k.dataset.chan===n)?'true':'false'));
+  $$('#trackInfo audio').forEach(a=>a.pause());
+  const vid=$('#vid'); vid.pause();
+  const isV=tr.type==='video'; $('#crtBox').classList.toggle('vid',isV); $('#crt').hidden=isV; vid.hidden=!isV;
+  if(isV){ vid.src=tr.src; vid.load(); } else { vid.removeAttribute('src'); vid.load(); }
+  const info=$('#trackInfo'); info.innerHTML='';
+  const st=document.createElement('div'); st.className='stp'; st.textContent='Take '+n+' / '+(isV?'Video':'Voice'); info.appendChild(st);
+  const h=document.createElement('h2'); h.textContent=tr.title; info.appendChild(h);
+  const p=document.createElement('p'); p.textContent=tr.note||''; info.appendChild(p);
+  if(!isV){ const a=document.createElement('audio'); a.controls=true; a.preload='metadata'; a.src=tr.src; a.style.width='100%'; info.appendChild(a); }
+  $('#osd').textContent='TAKE '+n; $('#osd2').textContent='STANDBY'; $('#onair').classList.remove('on'); mediaPlaying=false; duck(false);
+  studioSw();
+}
+function loop(t){
+  frame++;
+  if(cur==='broadcast'&&(!reduce||frame%30===0)) drawCrt(t);
+  if(!document.documentElement.classList.contains('lbopen')&&(!reduce||frame%30===0)) drawFx(t);
+  requestAnimationFrame(loop);
+}
+let looping=false; function startLoop(){ if(looping) return; looping=true; requestAnimationFrame(loop); }
+
+function fitName(){
+  const h=$('#pg-front h1'); if(!h||$('#pg-front').hidden) return;
+  h.style.fontSize=''; let fs=parseFloat(getComputedStyle(h).fontSize), g=0; const w=h.parentElement.clientWidth;
+  while(h.scrollWidth>w-2&&fs>20&&g++<50){ fs-=2; h.style.fontSize=fs+'px'; }
+}
+/* ============ NAVIGATION (soft dissolve) ============ */
+let turning=false;
+const BG={front:'#f3fff9',hoia:'#0b0304',gilded:'#140d05',card:'#0b6a58',broadcast:'#070b12',c1:'#fff1f6',c2:'#050409',liminal:'#0b0b0b',rocky:'#fff3e3',workshop:'#100c06',close:'#fdfcff'};
+function turnAnim(p,apply){
+  const t=$('#turn'), bg=BG[p.id]||'#000'; turning=true;
+  t.style.background='radial-gradient(circle at 50% 50%,color-mix(in srgb,'+p.acc+' 28%,'+bg+') 0,'+bg+' 68%)';
+  t.style.visibility='visible'; portalSnd();
+  const a=t.animate([{opacity:0},{opacity:1}],{duration:520,easing:'ease-in-out',fill:'forwards'});
+  a.onfinish=()=>{
+    apply();
+    const b=t.animate([{opacity:1},{opacity:0}],{duration:780,easing:'ease-in-out',fill:'forwards'});
+    b.onfinish=()=>{ try{a.cancel();b.cancel()}catch(e){} t.style.visibility='hidden'; turning=false; };
+  };
+}
+function go(id,o){
+  o=o||{}; const p=PAGES.find(x=>x.id===id); if(!p) return;
+  const tok=o.keepRun?run:++run;
+  if(!o.keepRun) stopVoice();
+  const apply=()=>{
+    $$('audio,video').forEach(m=>{ try{m.pause()}catch(e){} });
+    $$('.pg').forEach(s=>{ s.hidden=(s.id!=='pg-'+id); });
+    $('#world').dataset.w=id; cur=id;
+    $$('.rb').forEach(b=>{ const target=PAGES.find(x=>x.id===b.dataset.go); b.setAttribute('aria-current',(target&&target.ch===p.ch)?'true':'false'); });
+    $('#stage').scrollTop=0;
+    if(id==='front') fitName();
+    fxSet(id); sceneStart(id);
+    if(id==='broadcast'){ crtBoost=1; setChan(chan); }
+    $('#cap').style.setProperty('--cc',getComputedStyle($('#world')).getPropertyValue('--cc')||'#b8f23c');
+  };
+  const animated=!(o.instant||reduce||!booted||turning);
+  if(!animated) apply(); else turnAnim(p,apply);
+  if(!o.silent){ setTimeout(()=>{ if(tok!==run) return; say('e','C'+id,tok).then(ok=>{ if(ok) hideCapSoon(tok); }); },animated?1000:0); }
+}
+function turnBy(d){ const i=PAGES.findIndex(p=>p.id===cur); const n=PAGES[i+d]; if(n) go(n.id); }
+
+/* ============ SPARKS (light motes rising) ============ */
+function sparks(n,host,z){
+  host=host||$('#cover');
+  for(let i=0;i<n;i++){
+    const s=document.createElement('span'); s.className='spark'; const col=pick(['#b8f23c','#ff7fb6','#8fb0ff','#ffd23f']);
+    s.style.left=(Math.random()*100)+'%'; s.style.setProperty('--dx',((Math.random()-.5)*160)+'px');
+    s.style.animationDuration=(3+Math.random()*3)+'s'; s.style.animationDelay=(Math.random()*1.2)+'s';
+    s.style.background=col; s.style.color=col; if(z) s.style.zIndex=z;
+    host.appendChild(s); setTimeout(()=>s.remove(),7500);
+  }
+}
+
+/* ============ COVER: PRESS AND HOLD ============ */
+const HOLD=1300; let holding=false, holdDone=false, holdStart=0, holdRaf=0;
+function setProg(p){ $('#seal').style.setProperty('--p',p.toFixed(3)); $('#prog').style.strokeDashoffset=(289*(1-p)).toFixed(1); }
+function holdTick(){
+  if(!holding) return;
+  const p=Math.min(1,(performance.now()-holdStart)/HOLD); setProg(p);
+  if(p>=1&&!holdDone){ holdDone=true; $('#hint').textContent='Now let go'; try{navigator.vibrate&&navigator.vibrate(25)}catch(e){} }
+  holdRaf=requestAnimationFrame(holdTick);
+}
+function holdBegin(){
+  if(opening||holding) return;
+  holding=true; holdDone=false; holdStart=performance.now(); auInit();
+  $('#hint').textContent='Keep holding';
+  holdRaf=requestAnimationFrame(holdTick);
+}
+function holdEnd(){
+  if(!holding) return; holding=false; cancelAnimationFrame(holdRaf);
+  if(holdDone){ openBook(); }
+  else{
+    $('#hint').textContent='Hold a little longer, until the seal is fully lit';
+    const from=parseFloat($('#seal').style.getPropertyValue('--p'))||0, t0=performance.now();
+    (function back(){ const k=Math.min(1,(performance.now()-t0)/500); setProg(from*(1-k)); if(k<1&&!holding) requestAnimationFrame(back); })();
+  }
+}
+function askSound(){
+  return new Promise(res=>{
+    const u=$('#sndUi'); u.classList.add('show');
+    $('#sndOn').onclick=()=>{ u.classList.remove('show'); res(true); };
+    $('#sndOff').onclick=()=>{ u.classList.remove('show'); res(false); };
+  });
+}
+async function openBook(){
+  if(opening) return; opening=true;
+  const tok=++run, cover=$('#cover');
+  setProg(1); $('#holdUi').style.visibility='hidden'; $('#skip').hidden=true;
+  cover.classList.add('glow'); sparks(26);
+  await sleep(650);
+  cover.classList.add('opened'); $('#book').classList.add('opened'); sparks(18);
+  await sleep(1600);
+  if(tok!==run) return;
+  const on=await askSound();
+  if(tok!==run) return;
+  setSound(on); if(on) bloomSnd();
+  sparks(20);
+  await sleep(500);
+  for(const id of ['N1','N2']){ if(!await say('n',id,tok)) return; sparks(8); }
+  if(tok!==run) return;
+  cover.classList.add('leave'); await sleep(900);
+  enterWorld(); go('front',{silent:true,keepRun:true,instant:true});
+  await sleep(450);
+  for(const id of ['E1','E2']){ if(!await say('e',id,tok)) return; }
+  hideCapSoon(tok,2200);
+}
+function enterWorld(){
+  $('#cover').hidden=true;
+  $('#world').hidden=false; booted=true; fxSize();
+  startLoop();
+}
+function skipIntro(){
+  run++; stopVoice(); $('#cap').classList.remove('show'); opening=true;
+  setSound(false);
+  if(!booted) enterWorld();
+  go('front',{silent:true,instant:true});
+}
+function openBox(b){
+  if(b.classList.contains('open')) return;
+  b.classList.add('open'); b.setAttribute('aria-expanded','true'); boxSnd();
+  const p=$('#arcPanel'); p.hidden=false; requestAnimationFrame(()=>p.classList.add('show'));
+  setTimeout(()=>p.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'}),500);
+}
+
+/* ============ EVENTS ============ */
+fillSlots(); renderStudio(); setProg(0);
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitName);
+const seal=$('#seal');
+seal.addEventListener('pointerdown',e=>{ e.preventDefault(); try{seal.setPointerCapture(e.pointerId)}catch(_){} holdBegin(); });
+seal.addEventListener('pointerup',holdEnd);
+seal.addEventListener('pointercancel',holdEnd);
+seal.addEventListener('lostpointercapture',holdEnd);
+seal.addEventListener('contextmenu',e=>e.preventDefault());
+seal.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&!e.repeat){ e.preventDefault(); holdBegin(); } });
+seal.addEventListener('keyup',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); holdEnd(); } });
+$('#openAlt').addEventListener('click',()=>{ if(opening) return; auInit(); holdDone=true; openBook(); });
+$('#skip').addEventListener('click',skipIntro);
+$('#muteBtn').addEventListener('click',()=>setSound(!AU.on));
+$('#prevBtn').addEventListener('click',()=>turnBy(-1));
+$('#nextBtn').addEventListener('click',()=>turnBy(1));
+(function(){
+  const root=document.documentElement; let list=[], idx=0, lb=null, img, cnt, sx=null;
+  function build(){
+    lb=document.createElement('div'); lb.id='lb'; lb.hidden=true; lb.setAttribute('role','dialog'); lb.setAttribute('aria-label','Screenshot viewer');
+    lb.innerHTML='<img alt="Template screenshot, enlarged"><button type="button" class="lbx" aria-label="Close">×</button><button type="button" class="lbp" aria-label="Previous">‹</button><button type="button" class="lbn" aria-label="Next">›</button><span class="lbc"></span>';
+    document.body.appendChild(lb); img=lb.querySelector('img'); cnt=lb.querySelector('.lbc');
+    lb.addEventListener('click',e=>{ if(e.target.closest('.lbp')) return step(-1); if(e.target.closest('.lbn')) return step(1); close(); });
+    lb.addEventListener('touchstart',e=>{ sx=e.touches[0].clientX; },{passive:true});
+    lb.addEventListener('touchend',e=>{ if(sx===null) return; const dx=e.changedTouches[0].clientX-sx; sx=null; if(Math.abs(dx)>50){ e.preventDefault(); step(dx<0?1:-1); } });
+  }
+  function show(){ img.src=list[idx]; cnt.textContent=(idx+1)+' / '+list.length; }
+  function step(d){ idx=(idx+d+list.length)%list.length; show(); }
+  function open(i){ if(!lb) build(); idx=i; show(); lb.hidden=false; root.classList.add('lbopen'); lb.querySelector('.lbx').focus(); }
+  function close(){ if(!lb||lb.hidden) return; lb.hidden=true; root.classList.remove('lbopen'); }
+  function mark(){
+    const slots=[...document.querySelectorAll('#pg-workshop .slot.loaded')].filter(sl=>sl.querySelector('img'));
+    list=slots.map(sl=>sl.querySelector('img').src);
+    list.forEach(u=>{ const im=new Image(); im.src=u; if(im.decode) im.decode().catch(()=>{}); });
+    slots.forEach((sl,i)=>{ if(sl.classList.contains('zoomable')) return; sl.classList.add('zoomable'); sl.tabIndex=0; sl.setAttribute('role','button'); sl.setAttribute('aria-label','Enlarge screenshot '+(i+1)); sl.addEventListener('click',()=>open(i)); sl.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(i); } }); });
+  }
+  mark(); setTimeout(mark,600); setTimeout(mark,2000);
+  document.addEventListener('keydown',e=>{ if(!lb||lb.hidden) return; if(e.key==='Escape') close(); else if(e.key==='ArrowRight') step(1); else if(e.key==='ArrowLeft') step(-1); },true);
+})();
+document.addEventListener('keydown',e=>{ if($('#world').hidden||document.documentElement.classList.contains('lbopen')) return; if(e.key==='ArrowRight') turnBy(1); else if(e.key==='ArrowLeft') turnBy(-1); });
+window.addEventListener('pointermove',e=>{ if(cur==='hoia'){ const h=$('#pg-hoia'); h.style.setProperty('--mx',e.clientX+'px'); h.style.setProperty('--my',e.clientY+'px'); } });
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]'); if(g){ go(g.dataset.go); return; }
+  const k=e.target.closest('[data-chan]'); if(k){ setChan(+k.dataset.chan); return; }
+  const bx=e.target.closest('#arcBox'); if(bx){ openBox(bx); return; }
+  const c=e.target.closest('.pc'); if(c){ const f=c.classList.toggle('flip'); c.setAttribute('aria-pressed',f?'true':'false'); flipSnd(); return; }
+  if(e.target.closest('#twistBtn')){ const tb=$('#twistBox'); tb.hidden=!tb.hidden; if(!tb.hidden){ const h=$('#gTitle'); h.classList.remove('gl'); void h.offsetWidth; h.classList.add('gl'); glitchSnd(); } return; }
+  const v=e.target.closest('#veil'); if(v){ if(v.classList.contains('gone')) return; v.classList.add('gone'); revealSnd(); sparks(6,$('#world'),30);
+    setTimeout(()=>{ v.hidden=true; const r=$('#reveal'); r.hidden=false; r.scrollIntoView({block:'nearest'}); },800); return; }
+});
+window.addEventListener('resize',()=>{ if(!$('#world').hidden){ fxSize(); fxSet(cur); fitName(); } });
+})();
+</script>
+<script>
+(function(){
+  const d=document.getElementById('docWall'); if(!d) return;
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MODES={
+    calm:{n:'Resting',txt:'It hums and pulses like a heartbeat: a waterfall with no source, looping around the field.',sp:1,amp:3,hue:196,lit:.55,jit:0},
+    fear:{n:'Fear',txt:'It reflects the worst possibility, and ripples as if it were trembling.',sp:1.1,amp:6,hue:208,lit:.38,jit:1},
+    anger:{n:'Anger',txt:'It hums louder. The water ripples uncontrollably, and violent memories appear.',sp:2.1,amp:13,hue:188,lit:.75,jit:.5,flash:1},
+    grief:{n:'Grief',txt:'It slows down and dims, and shows a pained memory, or the face of someone you loved.',sp:.3,amp:2,hue:218,lit:.28,jit:0,face:1},
+    hope:{n:'Hope',txt:'It glows. Small drops escape the field and float around you, showing your dreams as if they had happened.',sp:.8,amp:3,hue:184,lit:.95,jit:0,drops:1}
+  };
+  let built=false, cv, g, cur='calm', run=false, t0=0, blend=null, txtEl;
+  const W=640,H=360, X0=90, X1=550, YT=84, YB=300;
+  function build(){
+    built=true;
+    const box=document.createElement('div'); box.className='wallviz';
+    box.innerHTML='<canvas width="640" height="360" role="img" aria-label="A concept sketch of the Great Water Wall: a glowing curtain of water falling around a field, with a small figure at its base for scale."></canvas><div class="wv-btns" role="group" aria-label="Emotion"></div><p class="wv-txt" aria-live="polite"></p><p class="wv-note">A concept sketch drawn in code, not final art. The 3D version was never reached. Colour changes per emotion are still undecided.</p>';
+    const body=d.querySelector('.docbody'); body.insertBefore(box,body.firstChild);
+    cv=box.querySelector('canvas'); g=cv.getContext('2d'); txtEl=box.querySelector('.wv-txt');
+    const bt=box.querySelector('.wv-btns');
+    Object.keys(MODES).forEach(k=>{ const b=document.createElement('button'); b.type='button'; b.textContent=MODES[k].n; b.setAttribute('aria-pressed',k===cur?'true':'false'); b.addEventListener('click',()=>{ cur=k; bt.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false')); txtEl.textContent=MODES[k].txt; if(reduce) frame(2); }); bt.appendChild(b); });
+    txtEl.textContent=MODES[cur].txt;
+  }
+  const P={sp:1,amp:3,hue:196,lit:.55,jit:0};
+  function lerpP(m){ for(const k of ['sp','amp','hue','lit','jit']) P[k]+=(m[k]-P[k])*.06; }
+  function beat(t,sp){ const ph=(t*.62*sp)%1; return Math.exp(-Math.pow((ph)*13,2))+.6*Math.exp(-Math.pow((ph-.2)*13,2)); }
+  function frame(t){
+    const m=MODES[cur]; if(reduce){ for(const k of ['sp','amp','hue','lit','jit']) P[k]=m[k]; } else lerpP(m);
+    const hb=beat(t,P.sp), lit=Math.min(1,P.lit+.22*hb);
+    const bg=g.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#04060c'); bg.addColorStop(1,'#08131f'); g.fillStyle=bg; g.fillRect(0,0,W,H);
+    // glow behind the wall
+    const gl=g.createRadialGradient(320,190,10,320,190,300); gl.addColorStop(0,'hsla('+P.hue+',90%,60%,'+(.16*lit)+')'); gl.addColorStop(1,'transparent'); g.fillStyle=gl; g.fillRect(0,0,W,H);
+    // curtain
+    g.lineCap='butt';
+    for(let x=X0,i=0;x<=X1;x+=4,i++){
+      const edge=Math.min(1,Math.min(x-X0,X1-x)/26);
+      let dx=Math.sin(x*.03+t*P.sp*2.2+i*.4)*P.amp+Math.sin(x*.011-t*P.sp*1.3)*P.amp*.6;
+      if(P.jit) dx+=Math.sin(t*38+i*1.7)*P.jit*2+(Math.random()-.5)*P.jit*3;
+      const xx=x+dx;
+      g.strokeStyle='hsla('+P.hue+',85%,'+(48+lit*22)+'%,'+(.1+.2*lit)*edge+')'; g.lineWidth=4; g.setLineDash([]);
+      g.beginPath(); g.moveTo(xx,YT); g.lineTo(xx+dx*.3,YB); g.stroke();
+      g.strokeStyle='hsla('+(P.hue-6)+',95%,88%,'+(.2+.55*lit)*edge+')'; g.lineWidth=1.6;
+      g.setLineDash([8+(i%5)*7,30+(i%4)*9]); g.lineDashOffset=-(t*70*P.sp*(1+(i%3)*.25)+i*13);
+      g.beginPath(); g.moveTo(xx,YT); g.lineTo(xx+dx*.3,YB); g.stroke();
+    }
+    g.setLineDash([]);
+    // memories: grief face, anger flashes
+    if(m.face){ const a=.1+.07*Math.sin(t*.6); const fg=g.createRadialGradient(320,180,4,320,180,60); fg.addColorStop(0,'rgba(220,235,255,'+a*2+')'); fg.addColorStop(1,'transparent'); g.fillStyle=fg; g.beginPath(); g.ellipse(320,180,34,48,0,0,6.283); g.fill(); }
+    if(m.flash&&Math.random()<.12){ g.fillStyle='rgba(255,255,255,.35)'; const fy=YT+Math.random()*(YB-YT-10); g.fillRect(X0+Math.random()*300,fy,60+Math.random()*120,2); }
+    // base
+    g.fillStyle='rgba(120,200,255,'+(.06+.08*lit)+')'; g.beginPath(); g.ellipse(320,YB+4,250,10,0,0,6.283); g.fill();
+    g.fillStyle='#02050a'; g.fillRect(0,YB+6,W,H-YB-6);
+    g.strokeStyle='hsla('+P.hue+',80%,70%,'+(.25+.3*lit)+')'; g.lineWidth=1.5; g.beginPath(); g.moveTo(0,YB+6.5); g.lineTo(W,YB+6.5); g.stroke();
+    // field ring, stabilizers and nucleus
+    g.strokeStyle='hsla('+P.hue+',80%,75%,.35)'; g.lineWidth=1; g.beginPath(); g.ellipse(320,YT-4,250,16,0,0,6.283); g.stroke();
+    const nR=24+4*hb; const ng=g.createRadialGradient(320,YT-24,2,320,YT-24,nR*2.2); ng.addColorStop(0,'rgba(255,255,255,.95)'); ng.addColorStop(.35,'hsla('+P.hue+',90%,70%,.85)'); ng.addColorStop(1,'transparent'); g.fillStyle=ng; g.beginPath(); g.arc(320,YT-24,nR*2.2,0,6.283); g.fill();
+    for(let k=0;k<6;k++){ const a=t*.45*P.sp+k*(6.283/6); const sx=320+Math.cos(a)*250, sy=YT-4+Math.sin(a)*16, z=Math.sin(a); g.fillStyle='hsla('+P.hue+',90%,'+(60+20*z)+'%,'+(.55+.35*z)+')'; g.beginPath(); g.arc(sx,sy,7+2*z,0,6.283); g.fill(); }
+    // person for scale
+    g.fillStyle='#010306'; g.fillRect(317,YB-22,6,22); g.beginPath(); g.arc(320,YB-27,4.2,0,6.283); g.fill();
+    g.strokeStyle='hsla('+P.hue+',90%,80%,'+(.3+.4*lit)+')'; g.lineWidth=1; g.beginPath(); g.moveTo(316.5,YB-22); g.lineTo(316.5,YB); g.stroke();
+    // hope drops
+    if(m.drops){ g.fillStyle='rgba(220,250,255,.9)'; for(let i=0;i<16;i++){ const ph=(t*.12+i/16)%1; const a=i*2.4+t*.5; const x=320+Math.cos(a)*(26+i*3.2), y=YB-10-ph*120+Math.sin(a*1.3)*8; g.globalAlpha=Math.sin(ph*3.14159)*.9; g.beginPath(); g.arc(x,y,1.6+(i%3)*.6,0,6.283); g.fill(); } g.globalAlpha=1; }
+  }
+  function loop(ts){
+    if(!run) return;
+    const pg=d.closest('.pg');
+    if(!d.open||document.hidden||(pg&&pg.hidden)||document.documentElement.classList.contains('lbopen')){ setTimeout(()=>requestAnimationFrame(loop),300); return; }
+    frame((ts-t0)/1000); requestAnimationFrame(loop);
+  }
+  d.addEventListener('toggle',()=>{
+    if(d.open){ if(!built) build(); if(reduce){ frame(2); return; } if(!run){ run=true; t0=performance.now(); requestAnimationFrame(loop); } }
+    else run=false;
+  });
+})();
+</script>
+
+</body>
+</html>
